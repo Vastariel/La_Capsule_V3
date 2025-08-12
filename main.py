@@ -10,8 +10,8 @@ if __name__=="__main__" :
     api.connect()
     api.start()
     print('connected')
-    time.sleep(3)
+    print(api.get_speed)
+    time.sleep(5)
     api.stop_telemetry()
     api.join()
     print('deconnected')
-

@@ -206,7 +206,7 @@ class API(Thread):
 
 
 if __name__=="__main__" : 
-    api = API(fps = 10)
+    api = API(fps = 20)
     api.connect()
     api.start()
 
