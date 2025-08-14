@@ -9,9 +9,9 @@ DISPLAY_HEIGHT = 1280
 FPS = 10
 
 #ASSETS
-BACKGROUND_PATH="assets/bg16-9.png"
+BACKGROUND_PATH="assets/bg_empty.png"
 NUM_FONT_PATH="assets/DS-DIGI.TTF"
-TXT_FONT_PATH="assets/Rubik-VariableFont_wght.ttf"
+TXT_FONT_PATH="assets/Rubik-VariableFont_wght.ttf" # TODO - Import New Font
 
 #COLORS
 WHITE=pygame.Color("White")
