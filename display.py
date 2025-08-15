@@ -9,7 +9,7 @@ class Display:
         pygame.font.init()
 
         # Always open fullscreen window (0,0 lets SDL pick the current display resolution)
-        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        self.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)
         self.width, self.height = self.screen.get_size()
         print(self.width, self.height)
 
@@ -17,7 +17,7 @@ class Display:
         bg_path = os.path.join(os.getcwd(), BACKGROUND_PATH)
         try:
             self.background = pygame.image.load(bg_path).convert_alpha()
-            self.background = pygame.transform.smoothscale(self.background, (self.width, self.height))
+            #self.background = pygame.transform.smoothscale(self.background, (self.width, self.height))
         except Exception:
             # Fallback: plain fill if asset missing
             self.background = pygame.Surface((self.width, self.height)).convert()
