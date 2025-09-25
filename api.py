@@ -2,12 +2,14 @@
 #coding: utf-8
 
 from threading import Thread
+import time
 from typing import List
 from config import *
 
 import krpc
 import pygame
 
+from config import *
 
 
 # Refresh Rate Constants
@@ -43,9 +45,6 @@ class API(Thread):
     def __init__(self) -> None:
         """
         Initialize the API thread with specified FPS.
-        
-        Args:
-            fps: Frames per second for the data collection loop
         """
         #-----Thread Initialization-----#
         Thread.__init__(self)
@@ -108,7 +107,7 @@ class API(Thread):
         
         # Control Interfaces
         self.control    = self.vessel.control     # Vessel control interface
-        self.flight     = self.vessel.flight()    # Flight data interface
+        self.flight     = self.vessel.flight(self.vessel.orbit.body.reference_frame)    # Flight data interface
         self.orbit      = self.vessel.orbit       # Orbital data interface
         self.resources  = self.vessel.resources   # Resource management interface
     
@@ -209,3 +208,20 @@ if __name__=="__main__" :
     api = API()
     api.connect()
     api.start()
+    try:
+        while True:
+            print(
+                f"Altitude : {api.altitude} m | "
+                f"Vitesse : {api.speed} m/s | "
+                f"Force G : {api.g_force} | "
+                f"Température : {api.temperature} K | "
+                f"Apoapsis : {api.apoapsis} m | "
+                f"Temps vers Apoapsis : {api.apoapsis_time} s | "
+                f"Périapsis : {api.periapsis} m | "
+                f"Temps vers Périapsis : {api.periapsis_time} s"
+            )
+            time.sleep(1)
+    except KeyboardInterrupt:
+        api.stop_telemetry()
+        api.join()
+        print('disconnected')
