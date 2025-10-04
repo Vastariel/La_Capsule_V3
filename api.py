@@ -10,6 +10,7 @@ import krpc
 import pygame
 
 from config import *
+import random
 
 
 # Refresh Rate Constants
@@ -220,6 +221,9 @@ if __name__=="__main__" :
                 f"Périapsis : {api.periapsis} m | "
                 f"Temps vers Périapsis : {api.periapsis_time} s"
             )
+            new_throttle = random.uniform(0, 100)
+            api.set_throttle_level(new_throttle / 100)
+            print(f"Throttle set to: {new_throttle:.2f}%")
             time.sleep(1)
     except KeyboardInterrupt:
         api.stop_telemetry()
