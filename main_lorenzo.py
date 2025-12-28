@@ -165,9 +165,6 @@ api = api.API(fps=10)
 api.connect()
 api.start()
 
-api.stop_telemetry()
-api.join()
-
 
 tele=Main(api)
 

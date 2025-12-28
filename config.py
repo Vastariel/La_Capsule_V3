@@ -1,12 +1,12 @@
 import pygame
 
 #Constant
-KSP_IP         = '192.168.1.76'
+KSP_IP         = '192.168.1.21'
 RPC_PORT       = 50008
 STREAM_PORT    = 50001
 DISPLAY_WIDTH  = 720
 DISPLAY_HEIGHT = 1280
-FPS            = 10
+FPS            = 30
 
 #ASSETS
 BACKGROUND_PATH = "assets/bg_empty.png"
