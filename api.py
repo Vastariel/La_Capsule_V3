@@ -43,13 +43,14 @@ class API(Thread):
         'con', 'vessel', 'camera', 'control', 'flight', 'orbit', 'resources'
     )
     
-    def __init__(self) -> None:
+    def __init__(self,name) -> None:
         """
         Initialize the API thread with specified FPS.
         """
         #-----Thread Initialization-----#
         Thread.__init__(self)
         
+        self.name = name
         #-----Thread Control Variables-----#
         self.is_running: bool = False  # Thread execution state
         
@@ -100,8 +101,8 @@ class API(Thread):
 
     def connect(self, ip: str = KSP_IP) -> None:
         """Establish connection to KSP and initialize game objects"""
-        self.con = krpc.connect("Raspi_4", ip, RPC_PORT)  # Main kRPC connection
-        
+        self.con = krpc.connect(self.name)  # Main kRPC connection
+
         # Game Objects
         self.vessel = self.con.space_center.active_vessel  # Currently active vessel
         self.camera = self.con.space_center.camera         # Game camera object
@@ -137,7 +138,7 @@ class API(Thread):
         clock = self.clock
         target_fps = self.target_fps
         update_method = self.update_telemetry_data
-        
+    
         while self.is_running:
             update_method()
             clock.tick(target_fps)
@@ -206,7 +207,7 @@ class API(Thread):
 
 
 if __name__=="__main__" : 
-    api = API()
+    api = API('Raspi-4')
     api.connect()
     api.start()
     try:
