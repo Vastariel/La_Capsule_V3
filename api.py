@@ -101,7 +101,12 @@ class API(Thread):
 
     def connect(self, ip: str = KSP_IP) -> None:
         """Establish connection to KSP and initialize game objects"""
-        self.con = krpc.connect(self.name)  # Main kRPC connection
+        self.con = krpc.connect(
+            name=self.name,
+            address=ip,
+            rpc_port=RPC_PORT,
+            stream_port=STREAM_PORT
+        )  # Main kRPC connection
 
         # Game Objects
         self.vessel = self.con.space_center.active_vessel  # Currently active vessel

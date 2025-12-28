@@ -1,6 +1,6 @@
 import krpc
 
-SERVER_IP = "192.168.1.25"  # IP de ton KSP / KRPC
+SERVER_IP = "192.168.1.76"  # IP de ton KSP / KRPC
 SERVER_PORT = 50008          # port par défaut kRPC
 SERVER_STREAM_PORT = 50001   # port par défaut pour le streaming
 
