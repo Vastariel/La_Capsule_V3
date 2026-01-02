@@ -3,13 +3,12 @@
 
 from threading import Thread
 import time
+import random
 from typing import List
 
 import krpc
-import pygame
 
 from config import *
-import random
 
 
 # Refresh Rate Constants
@@ -30,7 +29,7 @@ class API(Thread):
     """  
     __slots__ = (
         # Thread control
-        'is_running', 'frame_counter', 'target_fps', 'clock',
+        'is_running', 'frame_counter', 'target_fps', 'last_tick',
         # Data management  
         'data_sources_by_rate',
         # Telemetry values
@@ -56,7 +55,7 @@ class API(Thread):
         #-----Timing and FPS Control-----#
         self.frame_counter: int = 1                    # Current frame number (1 to fps)
         self.target_fps: int    = FPS                  # Target frames per second
-        self.clock              = pygame.time.Clock()  # Pygame clock for FPS control
+        self.last_tick: float   = time.perf_counter()  # Last tick timestamp
         
         #-----Data Management-----#
         self.data_sources_by_rate: List[List] = [[] for _ in range(REFRESH_MAX)]  # Data sources grouped by refresh rate
@@ -139,13 +138,17 @@ class API(Thread):
         """Thread entry point"""
         self.is_running = True
         
-        clock = self.clock
         target_fps = self.target_fps
+        frame_duration = 1.0 / target_fps
         update_method = self.update_telemetry_data
     
         while self.is_running:
+            start_time = time.perf_counter()
             update_method()
-            clock.tick(target_fps)
+            elapsed = time.perf_counter() - start_time
+            sleep_time = frame_duration - elapsed
+            if sleep_time > 0:
+                time.sleep(sleep_time)
 
     def stop_telemetry(self) -> None:
         """Stop the telemetry thread safely"""
@@ -153,8 +156,8 @@ class API(Thread):
 
     #-----GET_VALUE METHODS-----#
     def get_current_fps(self) -> str:
-        """Get current FPS as formatted string"""
-        return str(round(self.clock.get_fps(), 1))
+        """Get current FPS as string"""
+        return f"{self.target_fps}"
     
     def get_altitude(self) -> float:
         """Get current surface altitude in meters"""
@@ -207,6 +210,61 @@ class API(Thread):
         if self.cached_throttle_state != throttle_value:
             self.control.throttle = throttle_value
             self.cached_throttle_state = throttle_value
+
+    #========= ajout test par Camille =========#
+    def deploy_heat_shield(self) -> None:
+        """Deploy heat shield"""
+        try:
+            # Find and deploy heat shield
+            for part in self.vessel.parts.all:
+                if part.name == 'HeatShield' or 'heatshield' in part.name.lower():
+                    part.decouple()
+            print("[KSP] Bouclier thermique déployé")
+        except Exception as e:
+            print(f"[KSP] Erreur déploiement bouclier: {e}")
+    
+    def deploy_parachute(self) -> None:
+        """Deploy parachute"""
+        try:
+            self.control.parachutes = True
+            print("[KSP] Parachute déployé")
+        except Exception as e:
+            print(f"[KSP] Erreur déploiement parachute: {e}")
+    
+    def toggle_landing_gear(self) -> None:
+        """Toggle landing gear"""
+        try:
+            self.control.gear = not self.control.gear
+            state = "déployé" if self.control.gear else "rétracté"
+            print(f"[KSP] Train d'atterrissage {state}")
+        except Exception as e:
+            print(f"[KSP] Erreur train d'atterrissage: {e}")
+    
+    def start_engines(self) -> None:
+        """Start all engines"""
+        try:
+            self.control.throttle = 0.0
+            print("[KSP] Moteurs démarrés")
+        except Exception as e:
+            print(f"[KSP] Erreur démarrage moteurs: {e}")
+    
+    def deploy_fairing(self) -> None:
+        """Deploy fairing (coiffe)"""
+        try:
+            for part in self.vessel.parts.all:
+                if 'fairing' in part.name.lower():
+                    part.jettison()
+            print("[KSP] Coiffe éjectée")
+        except Exception as e:
+            print(f"[KSP] Erreur éjection coiffe: {e}")
+    
+    def stage(self) -> None:
+        """Activate next stage"""
+        try:
+            self.control.activate_next_stage()
+            print("[KSP] Étage déclenché")
+        except Exception as e:
+            print(f"[KSP] Erreur déclenchement étage: {e}")
 
 
 

@@ -1,7 +1,6 @@
 from gpiozero import LED, Button
 from gpiozero.pins.pigpio import PiGPIOFactory
 import time
-import threading
 
 # ==================== REMOTE GPIO SETUP ====================
 
