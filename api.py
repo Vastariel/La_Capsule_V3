@@ -4,7 +4,6 @@
 from threading import Thread
 import time
 from typing import List
-from config import *
 
 import krpc
 import pygame
