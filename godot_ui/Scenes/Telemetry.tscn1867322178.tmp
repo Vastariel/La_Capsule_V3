@@ -1,0 +1,543 @@
+[gd_scene load_steps=15 format=3 uid="uid://dw0y8cwqnon53"]
+
+[ext_resource type="Texture2D" uid="uid://bys5ki8ey7y7s" path="res://Assets/câdre_menu.png" id="1_y2dv5"]
+[ext_resource type="FontFile" uid="uid://docesvo38sb3h" path="res://Fonts/DS-DIGIB.TTF" id="2_1l3ks"]
+[ext_resource type="Texture2D" uid="uid://baoerg0fxq1ai" path="res://Assets/inner_circle.png" id="2_b4d12"]
+[ext_resource type="Texture2D" uid="uid://chjw3qrpnoory" path="res://Assets/outer-circle.png" id="3_or2ii"]
+[ext_resource type="Texture2D" uid="uid://cjuvdtyvi0dno" path="res://Assets/stage_container.png" id="4_1l3ks"]
+[ext_resource type="Script" uid="uid://ba7yvyfe5rayd" path="res://Scripts/surrounding.gd" id="4_hhwjn"]
+[ext_resource type="Texture2D" uid="uid://8t3m7ttmbpff" path="res://Assets/distance.png" id="5_8fkpw"]
+[ext_resource type="Texture2D" uid="uid://c77o5ywpbofdq" path="res://Assets/stages hilight.png" id="5_b4d12"]
+[ext_resource type="Theme" uid="uid://bc5jcq4pvhw1n" path="res://Assets/text-theme.tres" id="6_or2ii"]
+[ext_resource type="Script" uid="uid://d1n54ypk1j48a" path="res://Scripts/telemetry_ui.gd" id="7_telemetry_ui"]
+[ext_resource type="PackedScene" uid="uid://lv2daw0hkwx6" path="res://Scenes/menu_selector.tscn" id="9_wlw6n"]
+
+[sub_resource type="FontVariation" id="FontVariation_hhwjn"]
+
+[sub_resource type="FontVariation" id="FontVariation_or2ii"]
+
+[sub_resource type="FontVariation" id="FontVariation_1l3ks"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("7_telemetry_ui")
+metadata/_edit_lock_ = true
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0392157, 0.0588235, 0.109804, 1)
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="MarginContainer4" type="MarginContainer" parent="Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+metadata/_edit_lock_ = true
+
+[node name="Speed" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+theme_override_constants/separation = 25
+
+[node name="MarginContainer" type="MarginContainer" parent="Content/Speed"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Vitesse" type="Label" parent="Content/Speed"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("6_or2ii")
+theme_override_fonts/font = SubResource("FontVariation_hhwjn")
+theme_override_font_sizes/font_size = 60
+text = "VITESSE"
+
+[node name="Vitesse3" type="Label" parent="Content/Speed"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("6_or2ii")
+theme_override_font_sizes/font_size = 60
+text = ":"
+
+[node name="SpeedValue" type="Label" parent="Content/Speed"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("6_or2ii")
+theme_override_fonts/font = ExtResource("2_1l3ks")
+theme_override_font_sizes/font_size = 60
+text = "000.000 km/s"
+horizontal_alignment = 2
+
+[node name="MarginContainer2" type="MarginContainer" parent="Content/Speed"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarginContainer5" type="MarginContainer" parent="Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+metadata/_edit_lock_ = true
+
+[node name="CenterContainer" type="CenterContainer" parent="Content"]
+layout_mode = 2
+
+[node name="Surrounding" type="TextureRect" parent="Content/CenterContainer"]
+layout_mode = 2
+texture = ExtResource("3_or2ii")
+stretch_mode = 2
+script = ExtResource("4_hhwjn")
+metadata/_edit_use_anchors_ = true
+
+[node name="Inner Circle" type="HBoxContainer" parent="Content/CenterContainer"]
+layout_mode = 2
+size_flags_vertical = 4
+alignment = 1
+metadata/_edit_lock_ = true
+
+[node name="Border" type="TextureRect" parent="Content/CenterContainer/Inner Circle"]
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("2_b4d12")
+stretch_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Content/CenterContainer/Inner Circle"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Border2" type="TextureRect" parent="Content/CenterContainer/Inner Circle"]
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("2_b4d12")
+stretch_mode = 2
+flip_h = true
+
+[node name="Values" type="VBoxContainer" parent="Content/CenterContainer"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 80
+alignment = 1
+
+[node name="Apoastre" type="VBoxContainer" parent="Content/CenterContainer/Values"]
+layout_mode = 2
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/Apoastre"]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+text = "APOASTRE"
+
+[node name="ApoapsisValue" type="Label" parent="Content/CenterContainer/Values/Apoastre"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("6_or2ii")
+theme_override_fonts/font = ExtResource("2_1l3ks")
+theme_override_font_sizes/font_size = 60
+text = "000.000.000"
+horizontal_alignment = 2
+
+[node name="TextureRect" type="TextureRect" parent="Content/CenterContainer/Values/Apoastre"]
+layout_mode = 2
+texture = ExtResource("5_8fkpw")
+expand_mode = 5
+
+[node name="Altitude" type="VBoxContainer" parent="Content/CenterContainer/Values"]
+layout_mode = 2
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/Altitude"]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+text = "ALTITUDE"
+
+[node name="AltitudeValue" type="Label" parent="Content/CenterContainer/Values/Altitude"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("6_or2ii")
+theme_override_fonts/font = ExtResource("2_1l3ks")
+theme_override_font_sizes/font_size = 60
+text = "000.000.000"
+horizontal_alignment = 2
+
+[node name="TextureRect3" type="TextureRect" parent="Content/CenterContainer/Values/Altitude"]
+layout_mode = 2
+texture = ExtResource("5_8fkpw")
+expand_mode = 5
+
+[node name="Périastre" type="VBoxContainer" parent="Content/CenterContainer/Values"]
+layout_mode = 2
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/Périastre"]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+text = "PERIASTRE"
+
+[node name="PeriapsisValue" type="Label" parent="Content/CenterContainer/Values/Périastre"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("6_or2ii")
+theme_override_fonts/font = ExtResource("2_1l3ks")
+theme_override_font_sizes/font_size = 60
+text = "000.000.000"
+horizontal_alignment = 2
+
+[node name="TextureRect2" type="TextureRect" parent="Content/CenterContainer/Values/Périastre"]
+layout_mode = 2
+texture = ExtResource("5_8fkpw")
+expand_mode = 5
+
+[node name="MarginContainer6" type="MarginContainer" parent="Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+metadata/_edit_lock_ = true
+
+[node name="Bottom" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+theme_override_constants/separation = 25
+
+[node name="MarginContainer9" type="MarginContainer" parent="Content/Bottom"]
+layout_mode = 2
+
+[node name="Menu_rect" type="TextureRect" parent="Content/Bottom"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+texture = ExtResource("1_y2dv5")
+metadata/_edit_use_anchors_ = true
+
+[node name="Menu" type="Label" parent="Content/Bottom/Menu_rect"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -32.0
+offset_top = -15.0
+offset_right = 32.0
+offset_bottom = 17.0
+grow_horizontal = 2
+theme = ExtResource("6_or2ii")
+theme_override_fonts/font = SubResource("FontVariation_or2ii")
+text = "Menu"
+metadata/_edit_group_ = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Content/Bottom/Menu_rect"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 25.0
+offset_top = 11.0
+offset_right = -5.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 25
+alignment = 1
+
+[node name="Pause" type="Button" parent="Content/Bottom/Menu_rect/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+theme_override_font_sizes/font_size = 20
+toggle_mode = true
+text = "Pause"
+alignment = 0
+icon_alignment = 1
+
+[node name="Conseils" type="Button" parent="Content/Bottom/Menu_rect/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+theme_override_font_sizes/font_size = 20
+toggle_mode = true
+text = "Conseils"
+alignment = 0
+icon_alignment = 1
+
+[node name="En savoir plus" type="Button" parent="Content/Bottom/Menu_rect/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+theme_override_font_sizes/font_size = 20
+toggle_mode = true
+text = "En savoir plus"
+alignment = 0
+icon_alignment = 1
+
+[node name="Relancer la mission" type="Button" parent="Content/Bottom/Menu_rect/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+theme_override_font_sizes/font_size = 20
+toggle_mode = true
+text = "Relancer la mission"
+alignment = 0
+icon_alignment = 1
+
+[node name="MarginContainer11" type="MarginContainer" parent="Content/Bottom"]
+layout_mode = 2
+
+[node name="CenterContainer" type="AspectRatioContainer" parent="Content/Bottom"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Content/Bottom/CenterContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Content/Bottom/CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Stages" type="Label" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer3"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+size_flags_stretch_ratio = 0.0
+theme = ExtResource("6_or2ii")
+theme_override_fonts/font = SubResource("FontVariation_1l3ks")
+text = "Étages"
+horizontal_alignment = 3
+vertical_alignment = 3
+
+[node name="MarginContainer2" type="MarginContainer" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.43
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Content/Bottom/CenterContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 10.54
+
+[node name="Divider" type="TextureRect" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 15.14
+texture = ExtResource("5_b4d12")
+expand_mode = 5
+stretch_mode = 4
+
+[node name="MarginContainer2" type="MarginContainer" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.84
+
+[node name="MarginContainer12" type="MarginContainer" parent="Content/Bottom/CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Content/Bottom/CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="Booster4" type="TextureRect" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("4_1l3ks")
+
+[node name="Boosters" type="Label" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer/Booster4"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -68.0
+offset_top = -238.0
+offset_right = 1.0
+offset_bottom = -215.0
+grow_horizontal = 0
+grow_vertical = 0
+theme = ExtResource("6_or2ii")
+theme_override_font_sizes/font_size = 13
+text = "Boost"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProgressBar4" type="ProgressBar" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer/Booster4"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -28.0
+offset_top = -220.0
+offset_right = 28.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = ExtResource("6_or2ii")
+step = 0.5
+value = 100.0
+fill_mode = 3
+show_percentage = false
+metadata/_edit_group_ = true
+
+[node name="Booster3" type="TextureRect" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("4_1l3ks")
+
+[node name="3" type="Label" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer/Booster3"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -68.0
+offset_top = -240.0
+offset_right = 1.0
+offset_bottom = -217.0
+grow_horizontal = 0
+grow_vertical = 0
+theme = ExtResource("6_or2ii")
+theme_override_font_sizes/font_size = 16
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProgressBar3" type="ProgressBar" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer/Booster3"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -28.0
+offset_top = -220.0
+offset_right = 28.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = ExtResource("6_or2ii")
+step = 0.5
+value = 100.0
+fill_mode = 3
+show_percentage = false
+metadata/_edit_group_ = true
+
+[node name="Booster2" type="TextureRect" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("4_1l3ks")
+
+[node name="2" type="Label" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer/Booster2"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -68.0
+offset_top = -240.0
+offset_right = 1.0
+offset_bottom = -217.0
+grow_horizontal = 0
+grow_vertical = 0
+theme = ExtResource("6_or2ii")
+theme_override_font_sizes/font_size = 16
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProgressBar2" type="ProgressBar" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer/Booster2"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -28.0
+offset_top = -220.0
+offset_right = 28.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = ExtResource("6_or2ii")
+step = 0.5
+value = 100.0
+fill_mode = 3
+show_percentage = false
+metadata/_edit_group_ = true
+
+[node name="Booster1" type="TextureRect" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("4_1l3ks")
+
+[node name="1" type="Label" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer/Booster1"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -68.0
+offset_top = -240.0
+offset_right = 1.0
+offset_bottom = -217.0
+grow_horizontal = 0
+grow_vertical = 0
+theme = ExtResource("6_or2ii")
+theme_override_font_sizes/font_size = 16
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FuelBar" type="ProgressBar" parent="Content/Bottom/CenterContainer/VBoxContainer/HBoxContainer/Booster1"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -28.0
+offset_top = -220.0
+offset_right = 28.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = ExtResource("6_or2ii")
+step = 0.5
+value = 100.0
+fill_mode = 3
+show_percentage = false
+metadata/_edit_group_ = true
+
+[node name="MarginContainer10" type="MarginContainer" parent="Content/Bottom"]
+layout_mode = 2
+
+[node name="MarginContainer3" type="MarginContainer" parent="Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+metadata/_edit_lock_ = true
+
+[node name="VBoxContainer" parent="." instance=ExtResource("9_wlw6n")]
+layout_mode = 0
+offset_left = 41.0
+offset_top = 973.0
+offset_right = 341.0
+offset_bottom = 1185.0

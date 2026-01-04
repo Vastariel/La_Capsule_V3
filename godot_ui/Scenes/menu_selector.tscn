@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://lv2daw0hkwx6"]
+
+[ext_resource type="Script" uid="uid://brpm1s8b0c1in" path="res://Scripts/v_box_container.gd" id="1_yucye"]
+[ext_resource type="PackedScene" uid="uid://lvx7x0wfup0h" path="res://Scenes/option_box.tscn" id="2_6nu56"]
+
+[node name="VBoxContainer" type="VBoxContainer"]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_yucye")
+
+[node name="OptionBox" parent="." instance=ExtResource("2_6nu56")]
+layout_mode = 2
+
+[node name="OptionBox2" parent="." instance=ExtResource("2_6nu56")]
+layout_mode = 2
+
+[node name="OptionBox3" parent="." instance=ExtResource("2_6nu56")]
+layout_mode = 2
+
+[node name="OptionBox4" parent="." instance=ExtResource("2_6nu56")]
+layout_mode = 2
