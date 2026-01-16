@@ -1,6 +1,66 @@
 from gpiozero import LED, Button
 from gpiozero.pins.pigpio import PiGPIOFactory
 from config import RASPI_IP
+import picod
+import time
+
+# ==================== PICO CLASS ====================
+
+class PICO:
+    """
+    PICO class for reading Pico sensors via network (socat redirection)
+    Requires on Raspi: sudo apt install socat
+    Command: socat TCP-LISTEN:12345,reuseaddr,fork FILE:/dev/ttyACM0,raw,echo=0
+    """
+    
+    def __init__(self, pico_host=RASPI_IP, pico_port=12345):
+        """Initialize Pico connection via network socket"""
+        self.pico_host = pico_host
+        self.pico_port = pico_port
+        # Utiliser le lien PTY local créé par socat
+        self.device_url = "/tmp/pico_remote"
+        
+        try:
+            self.pico = picod.pico(device=self.device_url)
+            if self.pico.connected:
+                self.pico.reset()
+                print(f"✓ Pico initialisé via {self.device_url}")
+            else:
+                print(f"✗ Pico non connecté sur {self.device_url}")
+                self.pico = None
+        except Exception as e:
+            print(f"✗ Erreur connexion Pico: {e}")
+            self.pico = None
+    
+    def read_adc(self, channel):
+        """Read ADC value from Pico (0-4095)"""
+        if not self.pico or not self.pico.connected:
+            return None
+        
+        try:
+            status, ch, val = self.pico.adc_read(channel)
+            if status == picod.STATUS_OKAY:
+                return val
+        except Exception as e:
+            print(f"✗ Erreur lecture ADC canal {channel}: {e}")
+        return None
+    
+    def read_adc_percentage(self, channel):
+        """Read ADC value as percentage (0-100%)"""
+        val = self.read_adc(channel)
+        if val is not None:
+            return (val / 4095.0) * 100.0
+        return None
+    
+    def close(self):
+        """Close Pico connection"""
+        if self.pico:
+            try:
+                self.pico.close()
+                print("Pico connection fermée")
+            except:
+                pass
+
 
 # ==================== GPIO CLASS ====================
 
@@ -9,9 +69,14 @@ class GPIO:
     GPIO class for controlling KSP via Raspberry Pi pins with kRPC integration
     """
     
-    def __init__(self, api=None):
+    def __init__(self, api=None, enable_pico=False):
         """Initialize GPIO with optional API reference for kRPC integration"""
         self.api = api
+        
+        # ==================== PICO SETUP ====================
+        self.pico = None
+        if enable_pico:
+            self.pico = PICO(pico_host=RASPI_IP)
         
         # ==================== REMOTE GPIO SETUP ====================
         self.remote_factory = PiGPIOFactory(host=RASPI_IP)
@@ -152,11 +217,13 @@ class GPIO:
             self.etat_prec_boutons[pin] = etat
     
     def cleanup(self):
-        """Turn off all LEDs"""
+        """Turn off all LEDs and close connections"""
         for led in self.led_rouges.values():
             led.off()
         for led in self.led_vertes.values():
             led.off()
+        if self.pico:
+            self.pico.close()
         print("GPIO cleanup - LEDs éteintes")
 
 

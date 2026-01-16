@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-Petit serveur WebSocket de test qui envoie des paquets JSON de télémétrie toutes les secondes.
-Usage: python tools/ws_test_server.py
+Serveur WebSocket pour télémétrie KSP
 """
 
 import asyncio
 import json
-import signal
 import sys
 
 try:
@@ -18,14 +16,17 @@ except ImportError:
 from api import API
 
 
-
 HOST = "0.0.0.0"  # listen on all interfaces so other machines can connect
 PORT = 8080
 
+# Global API instance
+api = None
+server_task = None
 
 
 async def handler(ws, path=None):
-    print(f"Client connected: {ws.remote_address}")
+    """WebSocket handler - broadcasts telemetry data"""
+    print(f"Websocket Client connected: {ws.remote_address}")
     try:
         while True:
             # Récupère les données réelles de l'API
@@ -36,7 +37,6 @@ async def handler(ws, path=None):
                 "periapsis": api.periapsis if api.periapsis is not None else 0,
                 "g_force": api.g_force if api.g_force is not None else 0,
                 "temperature": api.temperature if api.temperature is not None else 0,
-                # ajouter d'autres champs
             }
             msg = json.dumps(data)
             await ws.send(msg)
@@ -44,22 +44,47 @@ async def handler(ws, path=None):
     except websockets.ConnectionClosed:
         print("Client disconnected")
 
-async def main():
+
+async def run_server():
+    """Start the WebSocket server"""
     async with websockets.serve(handler, HOST, PORT):
         print(f"WebSocket server listening on ws://{HOST}:{PORT}")
-        try:
-            await asyncio.Future()  # wait forever until Ctrl-C
-        except asyncio.CancelledError:
-            pass
-        except KeyboardInterrupt:
-            print("Keyboard interrupt received, shutting down server")
+        await asyncio.Future()  # wait forever until Ctrl-C
+
+
+def init_server(api_instance):
+    """Initialize server with API instance"""
+    global api
+    api = api_instance
+    print("Server initialized with API instance")
+
+
+async def start_server_async():
+    """Start server (async version)"""
+    global server_task
+    try:
+        await run_server()
+    except asyncio.CancelledError:
+        print("Server cancelled")
+    except KeyboardInterrupt:
+        print("Server stopped")
+
+
+def start_server():
+    """Start server in background (blocking)"""
+    try:
+        asyncio.run(run_server())
+    except KeyboardInterrupt:
+        print("Server stopped")
+
 
 if __name__ == "__main__":
+    from api import API
     api = API('ecran')
     api.connect()
     api.start()
     try:
-        asyncio.run(main())
+        asyncio.run(run_server())
     except KeyboardInterrupt:
         print("Server stopped")
         api.stop_telemetry()
