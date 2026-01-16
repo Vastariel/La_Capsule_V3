@@ -57,18 +57,17 @@ class PicoMonitor:
         if not self.connected:
             return state
         
-        # Read all 3 ADC channels
-        for channel in range(3):
-            try:
-                val = self.read_adc(channel)
-                percentage = self.read_adc_percentage(channel)
-                if val is not None:
-                    state["channels"][f"adc_{channel}"] = {
-                        "raw": val,
-                        "percentage": percentage
-                    }
-            except:
-                pass
+        # Read only ADC channel 0
+        try:
+            val = self.read_adc(0)
+            percentage = self.read_adc_percentage(0)
+            if val is not None:
+                state["channels"]["adc_0"] = {
+                    "raw": val,
+                    "percentage": percentage
+                }
+        except:
+            pass
         
         return state
     

@@ -46,6 +46,20 @@ class WebSocketClient:
             print(f"✗ Erreur WebSocket: {e}")
             self.connected = False
             await asyncio.sleep(2)  # Retry after 2 seconds
+    
+    async def connect_and_stream_generator(self, async_generator, interval=0.05):
+        """Connect and continuously stream data from async generator"""
+        try:
+            async with websockets.connect(self.uri, ping_interval=None) as websocket:
+                self.connected = True
+                print(f"✓ Connecté à {self.uri}")
+                
+                async for data in async_generator:
+                    msg = json.dumps(data)
+                    await websocket.send(msg)
+        except Exception as e:
+            print(f"✗ Erreur WebSocket: {e}")
+            self.connected = False
 
 
 if __name__ == "__main__":

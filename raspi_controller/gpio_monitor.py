@@ -3,8 +3,7 @@
 GPIO Monitor - Reads GPIO states on Raspberry Pi
 """
 
-from gpiozero import LED, Button, Device
-from gpiozero.pins.bcm import BCMFactory
+from gpiozero import LED, Button
 
 
 class GPIOMonitor:
@@ -12,8 +11,7 @@ class GPIOMonitor:
     
     def __init__(self):
         """Initialize GPIO monitoring"""
-        # Use local BCM pins (not remote)
-        Device.pin_factory = BCMFactory()
+        # gpiozero auto-detects the Raspberry Pi and uses BCM pins by default
         
         # LED PIN MAPPINGS
         self.led_rouges_pins = [24, 27, 25, 21]

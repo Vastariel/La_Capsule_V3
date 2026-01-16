@@ -9,6 +9,7 @@ import json
 import sys
 import time
 from threading import Thread
+
 from gpio_monitor import GPIOMonitor
 from pico_monitor import PicoMonitor
 from websocket_client import WebSocketClient
@@ -17,7 +18,7 @@ from websocket_client import WebSocketClient
 class RaspiController:
     """Main controller for Raspi - coordinates GPIO, Pico, and WebSocket"""
     
-    def __init__(self, bridge_host="192.168.1.25", bridge_port=8081):
+    def __init__(self, bridge_host="192.168.1.15", bridge_port=8081):
         """Initialize controller"""
         self.bridge_host = bridge_host
         self.bridge_port = bridge_port
@@ -40,14 +41,15 @@ class RaspiController:
     
     def send_data_loop(self):
         """Loop that collects and sends data"""
-        while self.running:
-            try:
-                data = self.collect_data()
-                asyncio.run(self.ws_client.send_data(data))
-                time.sleep(0.05)  # 20 Hz update rate
-            except Exception as e:
-                print(f"✗ Erreur envoi données: {e}")
-                time.sleep(1)
+        async def data_generator():
+            while self.running:
+                yield self.collect_data()
+                await asyncio.sleep(0.05)  # 20 Hz update rate
+        
+        try:
+            asyncio.run(self.ws_client.connect_and_stream_generator(data_generator()))
+        except Exception as e:
+            print(f"✗ Erreur boucle envoi: {e}")
     
     def run(self):
         """Start the controller"""
@@ -65,7 +67,7 @@ class RaspiController:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            print("\n✓ Arrêt gracieux...")
+            print("\n✓ Arrêt du script...")
             self.stop()
     
     def stop(self):
