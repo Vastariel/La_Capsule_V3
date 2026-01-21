@@ -19,6 +19,10 @@ var apoapsis_label: Label
 var altitude_label: Label
 var periapsis_label: Label
 var fuel_bar: ProgressBar
+var liquid_fuel_label: Label
+var oxidizer_label: Label
+var solid_fuel_label: Label
+var rocket: Control  # Reference to the rocket visualization
 
 func _ready():
 	ws = WebSocketPeer.new()
@@ -74,6 +78,21 @@ func _ready():
 				print("Found ProgressBar4 via find_child() fallback")
 			else:
 				push_error("Fuel ProgressBar not found under expected paths (and fallback failed)")
+
+	# Try to find fuel-related labels (can be null if not in UI)
+	liquid_fuel_label = find_child("LiquidFuelValue", true, false)
+	oxidizer_label = find_child("OxidizerValue", true, false)
+	solid_fuel_label = find_child("SolidFuelValue", true, false)
+	
+	# Get reference to rocket visualization
+	rocket = get_node_or_null("GameScreen/Rocket")
+	if rocket == null:
+		# Try to find it if it has a different path
+		rocket = find_child("Rocket", true, false)
+		if rocket:
+			print("Found Rocket node via find_child()")
+		else:
+			print("Warning: Rocket node not found - stage fuel gauges won't display")
 
 	if auto_connect:
 		_connect()
@@ -140,7 +159,7 @@ func _check_incoming():
 			print("Received non-text packet, ignoring.")
 
 func _process_message(text: String) -> void:
-	# Expect JSON like {"speed": 123.4, "altitude": 1000, "apoapsis": 5000, "periapsis": 400, "fuel": 75}
+	# Expect JSON like {"speed": 123.4, "altitude": 1000, "apoapsis": 5000, "periapsis": 400, "liquid_fuel": 100, "oxidizer": 150, "solid_fuel": 200}
 	var result = JSON.parse_string(text)
 	if typeof(result) != TYPE_DICTIONARY:
 		print("Received non-JSON or parse error:", text)
@@ -153,6 +172,9 @@ func _process_message(text: String) -> void:
 	var apo = data.get("apoapsis", data.get("apoastre", data.get("apo", null)))
 	var peri = data.get("periapsis", data.get("periastre", data.get("peri", null)))
 	var fuel = data.get("fuel", data.get("carburant", data.get("reserve", null)))
+	var liquid_fuel = data.get("liquid_fuel", data.get("carburant_liquide", null))
+	var oxidizer = data.get("oxidizer", data.get("oxidant", null))
+	var solid_fuel = data.get("solid_fuel", data.get("carburant_solide", null))
 
 	if speed != null:
 		speed_label.text = _format_speed(speed)
@@ -169,6 +191,18 @@ func _process_message(text: String) -> void:
 		elif typeof(fuel) == TYPE_STRING:
 			var fv = float(fuel)
 			fuel_bar.value = clamp(fv, 0.0, fuel_bar.max_value)
+	
+	# Update fuel labels if they exist
+	if liquid_fuel != null and liquid_fuel_label:
+		liquid_fuel_label.text = _format_big_number(float(liquid_fuel))
+	if oxidizer != null and oxidizer_label:
+		oxidizer_label.text = _format_big_number(float(oxidizer))
+	if solid_fuel != null and solid_fuel_label:
+		solid_fuel_label.text = _format_big_number(float(solid_fuel))
+	
+	# Update rocket stage fuel gauges if rocket exists
+	if rocket and rocket.has_method("update_from_telemetry"):
+		rocket.update_from_telemetry(data)
 
 	emit_signal("telemetry_updated", data)
 

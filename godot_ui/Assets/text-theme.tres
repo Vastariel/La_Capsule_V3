@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=5 format=3 uid="uid://bc5jcq4pvhw1n"]
+[gd_resource type="Theme" load_steps=8 format=3 uid="uid://bc5jcq4pvhw1n"]
 
 [ext_resource type="FontFile" uid="uid://1y7irbroxvxj" path="res://Fonts/AcuminVariableConcept.otf" id="1_0inak"]
 
@@ -7,8 +7,34 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nici0"]
 bg_color = Color(1, 1, 1, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vvv2u"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(1, 1, 1, 0.75)
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_p7e3m"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p7e3m"]
+bg_color = Color(0.039215688, 0.05882353, 0.10980392, 1)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0inak"]
-bg_color = Color(0.568627, 0.611765, 0.721569, 1)
+bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 
@@ -29,4 +55,7 @@ Label/constants/shadow_offset_y = 1
 Label/constants/shadow_outline_size = 1
 Label/font_sizes/font_size = 23
 Label/fonts/font = ExtResource("1_0inak")
+Label/styles/focus = SubResource("StyleBoxFlat_vvv2u")
+Label/styles/normal = SubResource("StyleBoxEmpty_p7e3m")
+ProgressBar/styles/background = SubResource("StyleBoxFlat_p7e3m")
 ProgressBar/styles/fill = SubResource("StyleBoxFlat_0inak")
