@@ -6,10 +6,14 @@
     "reconnect_timeout_s": 5
   },
 
+  "telemetry": {
+    "update_hz": 20
+  },
+
   "websocket": {
     "host": "0.0.0.0",
     "port": 8080,
-    "update_hz": 10
+    "update_hz": 20
   },
 
   "hardware": {
@@ -23,15 +27,23 @@
       "use_remote": true,
 
       "leds_rouges": {
-        "24": [4, 5, 6],
-        "27": [3],
-        "25": [2],
-        "21": [1]
+        "brightness": 0.5,
+        "active_high": true,
+        "pins": {
+          "24": "STAGE_BOOSTERS",
+          "27": "STAGE_1",
+          "25": "STAGE_2",
+          "21": "STAGE_3"
+        }
       },
 
       "leds_vertes": {
-        "18": "SAS",
-        "12": "RCS"
+        "brightness": 0.5,
+        "active_high": true,
+        "pins": {
+          "18": "SAS",
+          "12": "RCS"
+        }
       },
 
       "leviers": {

@@ -2,7 +2,8 @@
 """
 GPIO Handler - Entrées/sorties Raspberry Pi.
 
-Lit boutons et leviers, pilote les LEDs, déclenche les actions kRPC.
+Lit boutons et leviers (event-driven via gpiozero callbacks), pilote les
+LEDs (PWM pour la luminosité), déclenche les actions kRPC.
 Toute la config vient de config.json (section hardware.gpio).
 """
 
@@ -10,7 +11,7 @@ import sys
 from typing import Dict, Optional
 
 try:
-    from gpiozero import LED, Button
+    from gpiozero import PWMLED, Button
     from gpiozero.pins.pigpio import PiGPIOFactory
 except ImportError:
     print("✗ Module 'gpiozero' requis: pip install gpiozero pigpio")
@@ -36,24 +37,36 @@ class GPIOHandler:
         self.raspi_ip = config.get("raspi_ip", "127.0.0.1")
         self.use_remote = config.get("use_remote", True)
 
-        self.leds_rouges_cfg = _coerce_int_keys(config.get("leds_rouges", {}))
-        self.leds_vertes_cfg = _coerce_int_keys(config.get("leds_vertes", {}))
+        rouges_raw = config.get("leds_rouges", {})
+        self.red_brightness = float(rouges_raw.get("brightness", 0.5))
+        self.red_active_high = bool(rouges_raw.get("active_high", True))
+        # "pins" si présent sinon on accepte le mapping à plat (rétro-compat).
+        red_pins = rouges_raw.get("pins", {k: v for k, v in rouges_raw.items() if k.isdigit()})
+        self.leds_rouges_cfg = _coerce_int_keys(red_pins)
+
+        vertes_raw = config.get("leds_vertes", {})
+        self.green_brightness = float(vertes_raw.get("brightness", self.red_brightness))
+        self.green_active_high = bool(vertes_raw.get("active_high", True))
+        green_pins = vertes_raw.get("pins", {k: v for k, v in vertes_raw.items() if k.isdigit()})
+        self.leds_vertes_cfg = _coerce_int_keys(green_pins)
+
         self.leviers_cfg = _coerce_int_keys(config.get("leviers", {}))
         self.boutons_cfg = _coerce_int_keys(config.get("boutons", {}))
 
         self.factory = None
         self.connected = False
 
-        self.leds_red: Dict[int, LED] = {}
-        self.leds_green: Dict[int, LED] = {}
+        self.leds_red: Dict[int, PWMLED] = {}
+        self.leds_green: Dict[int, PWMLED] = {}
         self.leviers: Dict[int, Button] = {}
         self.boutons: Dict[int, Button] = {}
 
-        self._prev_leviers: Dict[int, bool] = {}
-        self._prev_boutons: Dict[int, bool] = {}
-        self._stage_led_states: Dict[int, bool] = {}
-        self._sas_led = False
-        self._rcs_led = False
+        # LED rouge par nom d'action (ex: "STAGE_BOOSTERS" → pin 24).
+        self._red_led_by_name: Dict[str, int] = {}
+        # État "allumée" (True) / "éteinte" (False) pour chaque LED rouge.
+        self._red_on: Dict[int, bool] = {}
+        self._sas_on = False
+        self._rcs_on = False
 
         self._connect_factory()
         if self.connected:
@@ -75,81 +88,77 @@ class GPIOHandler:
             print("[GPIO] Mode GPIO local")
 
     def _initialize_pins(self) -> None:
-        for pin in self.leds_rouges_cfg:
+        for pin, action_name in self.leds_rouges_cfg.items():
             try:
-                self.leds_red[pin] = LED(pin, pin_factory=self.factory)
-                self._stage_led_states[pin] = False
+                led = PWMLED(pin, pin_factory=self.factory, active_high=self.red_active_high)
+                self.leds_red[pin] = led
+                self._red_on[pin] = True
+                led.value = self.red_brightness
+                if isinstance(action_name, str):
+                    self._red_led_by_name[action_name] = pin
             except Exception as e:
                 print(f"[GPIO] LED rouge {pin}: {e}")
 
-        for pin in self.leds_vertes_cfg:
+        for pin, role in self.leds_vertes_cfg.items():
             try:
-                self.leds_green[pin] = LED(pin, pin_factory=self.factory)
+                led = PWMLED(pin, pin_factory=self.factory, active_high=self.green_active_high)
+                led.value = 0.0
+                self.leds_green[pin] = led
             except Exception as e:
                 print(f"[GPIO] LED verte {pin}: {e}")
 
-        for pin in self.leviers_cfg:
+        for pin, action in self.leviers_cfg.items():
             try:
-                self.leviers[pin] = Button(pin, pull_up=True, pin_factory=self.factory)
-                self._prev_leviers[pin] = False
+                btn = Button(pin, pull_up=True, pin_factory=self.factory, bounce_time=0.02)
+                btn.when_pressed = self._make_lever_callback(pin, action, True)
+                btn.when_released = self._make_lever_callback(pin, action, False)
+                self.leviers[pin] = btn
             except Exception as e:
                 print(f"[GPIO] Levier {pin}: {e}")
 
-        for pin in self.boutons_cfg:
+        for pin, action in self.boutons_cfg.items():
             try:
-                self.boutons[pin] = Button(pin, pull_up=True, pin_factory=self.factory)
-                self._prev_boutons[pin] = False
+                btn = Button(pin, pull_up=True, pin_factory=self.factory, bounce_time=0.02)
+                btn.when_pressed = self._make_button_callback(pin, action)
+                self.boutons[pin] = btn
             except Exception as e:
                 print(f"[GPIO] Bouton {pin}: {e}")
 
         print(
-            f"[GPIO] {len(self.leds_red)} LED rouges, {len(self.leds_green)} vertes, "
+            f"[GPIO] {len(self.leds_red)} LED rouges (PWM dim {self.red_brightness:.2f}), "
+            f"{len(self.leds_green)} vertes (dim {self.green_brightness:.2f}), "
             f"{len(self.leviers)} leviers, {len(self.boutons)} boutons"
         )
 
-    # ---- Boucle ------------------------------------------------------
+    # ---- Callbacks event-driven --------------------------------------
 
-    def update(self) -> None:
-        if not self.connected:
-            return
-        self._update_leviers()
-        self._update_boutons()
-        self._update_throttle()
-        self._update_leds()
+    def _make_button_callback(self, pin: int, action: Dict):
+        def _cb():
+            self._dispatch_button(pin, action)
+        return _cb
 
-    def _update_leviers(self) -> None:
-        for pin, action in self.leviers_cfg.items():
-            btn = self.leviers.get(pin)
-            if btn is None:
-                continue
-            pressed = btn.is_pressed
-            if pressed == self._prev_leviers[pin]:
-                continue
-            self._prev_leviers[pin] = pressed
+    def _make_lever_callback(self, pin: int, action: str, pressed: bool):
+        def _cb():
             print(f"[GPIO] Levier {action}: {'ON' if pressed else 'OFF'}")
             if action == "SAS" and self.krpc:
                 self.krpc.set_sas(pressed)
             elif action == "RCS" and self.krpc:
                 self.krpc.set_rcs(pressed)
-            # THROTTLE_CONTROL : géré dans _update_throttle
-
-    def _update_boutons(self) -> None:
-        for pin, action in self.boutons_cfg.items():
-            btn = self.boutons.get(pin)
-            if btn is None:
-                continue
-            pressed = btn.is_pressed
-            was = self._prev_boutons[pin]
-            if pressed and not was:
-                self._dispatch_button(pin, action)
-            self._prev_boutons[pin] = pressed
+            elif action == "THROTTLE_CONTROL" and self.krpc:
+                if not pressed and self.krpc.throttle_state != 0.0:
+                    self.krpc.set_throttle(0.0)
+        return _cb
 
     def _dispatch_button(self, pin: int, action: Dict) -> None:
         if not self.krpc:
             return
         atype = action.get("type")
+        name = action.get("name", "")
         if atype == "ag":
-            self.krpc.trigger_action_group(int(action["value"]))
+            value = int(action["value"])
+            self.krpc.trigger_action_group(value % 10)
+            # Si ce bouton correspond à une LED rouge, on l'éteint (PWM → 0).
+            self._turn_off_red_led(name)
         elif atype == "gear_brakes":
             self.krpc.toggle_gear_and_brakes()
         elif atype == "map_toggle":
@@ -157,55 +166,94 @@ class GPIOHandler:
         else:
             print(f"[GPIO] Action inconnue sur pin {pin}: {action}")
 
-    def _update_throttle(self) -> None:
-        if not self.pico or not self.krpc:
+    def _turn_off_red_led(self, action_name: str) -> None:
+        pin = self._red_led_by_name.get(action_name)
+        if pin is None:
             return
-        # Lever THROTTLE_CONTROL (par défaut pin 22 dans leviers_cfg)
+        led = self.leds_red.get(pin)
+        if led is None or not self._red_on.get(pin, False):
+            return
+        led.value = 0.0
+        self._red_on[pin] = False
+        print(f"[GPIO] LED rouge {action_name} (pin {pin}) éteinte")
+
+    # ---- Sync état : leviers, throttle, retour au lancement ---------
+
+    def resync_vessel_state(self) -> None:
+        """Au changement de vaisseau (retour au lancement) : rallume toutes
+        les LEDs rouges, pousse l'état des leviers vers kRPC.
+        """
+        print("[GPIO] Resync vaisseau : LEDs rouges rallumées, leviers poussés")
+        for pin, led in self.leds_red.items():
+            led.value = self.red_brightness
+            self._red_on[pin] = True
+        self._push_lever_states()
+
+    def _push_lever_states(self) -> None:
+        """Aligne KSP sur la position actuelle des leviers (SAS/RCS/throttle)."""
+        if not self.krpc:
+            return
+        for pin, action in self.leviers_cfg.items():
+            lever = self.leviers.get(pin)
+            if lever is None:
+                continue
+            pressed = lever.is_pressed
+            if action == "SAS":
+                self.krpc.set_sas(pressed)
+            elif action == "RCS":
+                self.krpc.set_rcs(pressed)
+            elif action == "THROTTLE_CONTROL" and not pressed:
+                self.krpc.set_throttle(0.0)
+        # Throttle : on force une lecture Pico même si non changée.
+        if self.pico and self._throttle_lever_active():
+            value = self.pico.get_throttle()
+            self.krpc.set_throttle(value)
+
+    # ---- Boucle (throttle + LEDs vertes) ----------------------------
+
+    def update(self) -> None:
+        if not self.connected:
+            return
+        self._update_throttle()
+        self._update_green_leds()
+
+    def _throttle_lever_active(self) -> bool:
         throttle_pin = next(
             (p for p, a in self.leviers_cfg.items() if a == "THROTTLE_CONTROL"), None
         )
-        if throttle_pin is not None:
-            lever = self.leviers.get(throttle_pin)
-            if lever is not None and not lever.is_pressed:
-                # Sécurité : lever OFF → coupe le throttle
-                if self.krpc.throttle_state != 0.0:
-                    self.krpc.set_throttle(0.0)
-                return
+        if throttle_pin is None:
+            return True
+        lever = self.leviers.get(throttle_pin)
+        return lever is not None and lever.is_pressed
 
+    def _update_throttle(self) -> None:
+        if not self.pico or not self.krpc:
+            return
+        if not self._throttle_lever_active():
+            if self.krpc.throttle_state != 0.0:
+                self.krpc.set_throttle(0.0)
+            return
         new_value = self.pico.get_throttle_if_changed()
         if new_value is not None:
             self.krpc.set_throttle(new_value)
 
-    def _update_leds(self) -> None:
-        if not self.krpc or not self.krpc.connected or not self.krpc.vessel:
+    def _update_green_leds(self) -> None:
+        if not self.krpc or not self.krpc.connected:
             return
-
-        # LEDs vertes : SAS / RCS
         for pin, role in self.leds_vertes_cfg.items():
             led = self.leds_green.get(pin)
             if led is None:
                 continue
             if role == "SAS":
-                self._toggle_led(led, self.krpc.sas_state, "_sas_led")
+                self._set_green(led, self.krpc.sas_state, "_sas_on")
             elif role == "RCS":
-                self._toggle_led(led, self.krpc.rcs_state, "_rcs_led")
+                self._set_green(led, self.krpc.rcs_state, "_rcs_on")
 
-        # LEDs rouges : stage courant
-        current_stage = self.krpc.telemetry.get("current_stage", 0)
-        for pin, stages in self.leds_rouges_cfg.items():
-            led = self.leds_red.get(pin)
-            if led is None:
-                continue
-            active = current_stage in stages
-            if active != self._stage_led_states.get(pin, False):
-                (led.on if active else led.off)()
-                self._stage_led_states[pin] = active
-
-    def _toggle_led(self, led: LED, wanted: bool, attr: str) -> None:
+    def _set_green(self, led: PWMLED, wanted: bool, attr: str) -> None:
         current = getattr(self, attr)
         if wanted == current:
             return
-        (led.on if wanted else led.off)()
+        led.value = self.green_brightness if wanted else 0.0
         setattr(self, attr, wanted)
 
     # ---- Cleanup -----------------------------------------------------
@@ -213,9 +261,9 @@ class GPIOHandler:
     def cleanup(self) -> None:
         try:
             for led in self.leds_red.values():
-                led.off()
+                led.value = 0.0
             for led in self.leds_green.values():
-                led.off()
+                led.value = 0.0
             print("[GPIO] LEDs éteintes")
         except Exception as e:
             print(f"[GPIO] Erreur cleanup: {e}")

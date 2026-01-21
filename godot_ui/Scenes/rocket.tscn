@@ -1,0 +1,199 @@
+[gd_scene load_steps=6 format=3 uid="uid://d1a3mg4gc0axk"]
+
+[ext_resource type="Texture2D" uid="uid://bpk0b3froarq" path="res://Assets/coiffe.png" id="1_qcqlf"]
+[ext_resource type="Texture2D" uid="uid://ysd8ll010d40" path="res://Assets/stage 3.png" id="2_vqk18"]
+[ext_resource type="Texture2D" uid="uid://txy51er1s07" path="res://Assets/stage 1.png" id="3_8pv10"]
+[ext_resource type="Texture2D" uid="uid://cu0x60f54ol8y" path="res://Assets/stage 2.png" id="4_pvy4x"]
+[ext_resource type="Texture2D" uid="uid://d0gt1xhh2pqsa" path="res://Assets/boosters.png" id="5_ls16j"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Coiffe" type="TextureRect" parent="."]
+self_modulate = Color(0.4867156, 0.5613898, 0.74654627, 1)
+layout_mode = 1
+offset_left = 1013.0001
+offset_top = -62.999985
+offset_right = 1113.0001
+offset_bottom = 141.00002
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("1_qcqlf")
+
+[node name="Coiffe_2" type="TextureRect" parent="."]
+clip_children = 1
+layout_mode = 1
+offset_left = 1013.0001
+offset_top = -62.999985
+offset_right = 1113.0001
+offset_bottom = 141.00002
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("1_qcqlf")
+
+[node name="ColorRect" type="ColorRect" parent="Coiffe_2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Etage3" type="TextureRect" parent="."]
+self_modulate = Color(0.4867156, 0.5613898, 0.74654627, 1)
+layout_mode = 1
+offset_left = 726.0
+offset_top = -80.999985
+offset_right = 857.0
+offset_bottom = 19.000015
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("2_vqk18")
+
+[node name="Etage3_2" type="TextureRect" parent="."]
+clip_children = 1
+layout_mode = 1
+offset_left = 726.0
+offset_top = -80.999985
+offset_right = 857.0
+offset_bottom = 19.000015
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("2_vqk18")
+
+[node name="ColorRect2" type="ColorRect" parent="Etage3_2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Etage2" type="TextureRect" parent="."]
+self_modulate = Color(0.4867156, 0.5613898, 0.74654627, 1)
+layout_mode = 1
+offset_left = 580.0
+offset_top = -62.0
+offset_right = 680.0
+offset_bottom = 91.0
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("4_pvy4x")
+
+[node name="Etage2_2" type="TextureRect" parent="."]
+clip_children = 1
+layout_mode = 1
+offset_left = 580.0
+offset_top = -62.0
+offset_right = 680.0
+offset_bottom = 91.0
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("4_pvy4x")
+
+[node name="ColorRect3" type="ColorRect" parent="Etage2_2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Etage1" type="TextureRect" parent="."]
+self_modulate = Color(0.4867156, 0.5613898, 0.74654627, 1)
+layout_mode = 1
+offset_left = 374.0
+offset_top = -62.0
+offset_right = 474.0
+offset_bottom = 236.0
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("3_8pv10")
+
+[node name="Etage1_2" type="TextureRect" parent="."]
+clip_children = 1
+layout_mode = 1
+offset_left = 374.0
+offset_top = -62.0
+offset_right = 474.0
+offset_bottom = 236.0
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("3_8pv10")
+
+[node name="ColorRect4" type="ColorRect" parent="Etage1_2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Booster" type="TextureRect" parent="."]
+self_modulate = Color(0.4867156, 0.5613898, 0.74654627, 1)
+layout_mode = 1
+anchors_preset = -1
+offset_left = 365.00003
+offset_top = 74.00001
+offset_right = 410.00003
+offset_bottom = 365.0
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("5_ls16j")
+
+[node name="Booster_2" type="TextureRect" parent="."]
+clip_children = 1
+layout_mode = 1
+anchors_preset = -1
+offset_left = 365.00003
+offset_top = 74.00001
+offset_right = 410.00003
+offset_bottom = 365.0
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("5_ls16j")
+
+[node name="ColorRect5" type="ColorRect" parent="Booster_2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Booster2" type="TextureRect" parent="."]
+self_modulate = Color(0.4867156, 0.5613898, 0.74654627, 1)
+layout_mode = 1
+anchors_preset = -1
+offset_left = 365.0
+offset_top = -133.00002
+offset_right = 410.0
+offset_bottom = 157.99998
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("5_ls16j")
+
+[node name="Booster2_2" type="TextureRect" parent="."]
+clip_children = 1
+layout_mode = 1
+anchors_preset = -1
+offset_left = 365.0
+offset_top = -133.00002
+offset_right = 410.0
+offset_bottom = 157.99998
+rotation = 1.5707964
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("5_ls16j")
+
+[node name="ColorRect6" type="ColorRect" parent="Booster2_2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
