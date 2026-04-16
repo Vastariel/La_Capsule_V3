@@ -1,0 +1,84 @@
+{
+  "network": {
+    "ksp_pc": {
+      "ip": "192.168.1.27",
+      "krpc_rpc_port": 50008,
+      "krpc_stream_port": 50001,
+      "description": "PC exécutant KSP avec kRPC"
+    },
+    "raspi": {
+      "ip": "192.168.1.56",
+      "hostname": "raspberrypi.local",
+      "description": "Raspberry Pi 4 contrôleur central"
+    },
+    "godot_client": {
+      "description": "Client Godot qui se connecte au bridge WebSocket"
+    },
+    "bridge_websocket": {
+      "host": "0.0.0.0",
+      "port": 8080,
+      "path": "/telemetry",
+      "description": "Serveur WebSocket du bridge (écoute sur tous les interfaces)"
+    }
+  },
+
+  "hardware": {
+    "pico": {
+      "port": "/dev/ttyACM0",
+      "baud_rate": 115200,
+      "description": "Microcontrôleur RP2040 pour capteurs ADC",
+      "adc_channels": {
+        "0": "Throttle potentiometer",
+        "1": "Reserved",
+        "2": "Reserved",
+        "3": "Reserved"
+      }
+    },
+    
+    "gpio_raspi": {
+      "leds_rouges": [24, 27, 25, 21],
+      "leds_vertes": [18, 12],
+      
+      "leviers": {
+        "16": "SAS",
+        "26": "RCS",
+        "22": "THROTTLE_CONTROL"
+      },
+      
+      "boutons": {
+        "6": "HEAT_SHIELD",
+        "13": "PARACHUTE",
+        "11": "LANDING_GEAR",
+        "5": "TOGGLE_MAP",
+        "20": "ENGINE_START",
+        "7": "FAIRING",
+        "23": "STAGE_BOOSTERS",
+        "8": "STAGE_1",
+        "4": "STAGE_2",
+        "19": "STAGE_3"
+      }
+    }
+  },
+
+  "performance": {
+    "fps": 30,
+    "websocket_update_interval_ms": 100,
+    "throttle_smoothing_window": 10,
+    "throttle_deadzone_percent": 2.0,
+    "throttle_change_threshold_percent": 1.0
+  },
+
+  "telemetry": {
+    "refresh_rates": {
+      "critical": 1,
+      "important": 5,
+      "normal": 10
+    }
+  },
+
+  "logging": {
+    "level": "INFO",
+    "file": "/tmp/bridge.log",
+    "console": true
+  }
+}

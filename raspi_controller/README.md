@@ -1,53 +1,136 @@
-# Raspi Controller
+# raspi_controller - Alternative Controller
 
-Sous-projet qui s'exécute sur la **Raspberry Pi** pour collecter les données des GPIO et du Pico, puis les envoie via WebSocket au bridge_krpc sur le PC.
+## Purpose
 
-## Architecture
+`raspi_controller/` is an **alternative lightweight implementation** that:
+- Monitors GPIO and Pico locally on Raspberry Pi
+- Sends data to bridge_python via WebSocket
+- Could theoretically run independently
 
-```
-Raspi:
-├── GPIO Monitor (lit les leviers et boutons locaux)
-├── Pico Monitor (lit les ADC du Pico branché)
-└── WebSocket Client (envoie les données au PC)
-      ↓
-PC (Bridge KRPC):
-├── Reçoit les données GPIO/Pico
-└── Les envoie via Godot UI + KSP
-```
+## Current Status
 
-## Installation
+**⚠️ Currently experimental and optional.** 
 
-Sur la Raspi :
+**Recommended approach**: Use `bridge_python` instead, which integrates all components.
+
+## When raspi_controller is Useful
+
+1. **Distributed Architecture**: Run GPIO monitoring separately from API/WebSocket server
+2. **Testing**: Verify GPIO/Pico work independently
+3. **Scalability**: Multiple raspi_controllers → single bridge server (future)
+
+## Components
+
+### gpio_monitor.py
+- Monitors GPIO states locally
+- Tracks buttons, switches, LEDs
+- No remote pigpio needed
+
+### pico_monitor.py
+- Reads Pico ADC values
+- Direct USB connection
+- No socat redirection needed
+
+### websocket_client.py
+- Sends monitored data to bridge
+- Handles reconnection
+- Async streaming
+
+### main.py
+- Coordinates all modules
+- Runs in background
+
+## Usage (Optional)
+
 ```bash
-pip3 install -r requirements.txt
-```
+# Install dependencies
+python3 -m pip install -r requirements.txt
 
-## Utilisation
-
-```bash
+# Run
 python3 main.py
+
+# Or run daemon
+nohup python3 main.py &
 ```
 
-## Structure des données
+## Configuration
 
-Les données envoyées via WebSocket ont la structure suivante :
+Edit `main.py` to set bridge connection:
+```python
+controller = RaspiController(
+    bridge_host="192.168.1.25",  # Where bridge_python runs
+    bridge_port=8081
+)
+```
 
-```json
-{
-  "timestamp": 1234567890.5,
-  "gpio": {
-    "leviers": {
-      "SAS": true,
-      "RCS": false,
-      "THROTTLE_CONTROL": false
-    },
-    "boutons": {
-      "STAGE_BOOSTERS": false,
-      "STAGE_1": false,
-      ...
-    },
-    "leds_rouges": {...},
-    "leds_vertes": {...}
+## Why bridge_python is Better
+
+✅ **bridge_python** (Recommended):
+- Runs on Raspi, controls everything
+- Single source of truth for hardware state
+- Direct GPIO control without extra WebSocket hop
+- Better real-time performance
+- Easier to debug
+
+❌ **raspi_controller** (Alternative):
+- Extra network hop (Raspi → Raspi)
+- More complex architecture
+- Potential timing issues
+- Monitoring only (no control in current implementation)
+
+## Architecture Comparison
+
+### Option 1: Using bridge_python (RECOMMENDED)
+```
+KSP → bridge_python [GPIO + Pico] → Godot
+       ↓
+      WebSocket
+```
+
+### Option 2: Using raspi_controller (NOT RECOMMENDED)
+```
+KSP → bridge_python [GPIO + Pico] → Godot
+              ↑
+        raspi_controller (extra component)
+              ↓
+           WebSocket
+```
+
+## Migration Path
+
+If you're using raspi_controller:
+
+1. **Switch to bridge_python**:
+   ```bash
+   cd bridge_python
+   python3 main.py
+   ```
+
+2. **raspi_controller becomes optional**:
+   - Keep it for reference
+   - Use if distributed architecture needed later
+
+## Future Enhancement
+
+If distributed monitoring becomes necessary:
+
+```
+Device 1: GPIO Monitor → Local API
+Device 2: Pico Monitor → Local API
+Device 3: Bridge → Aggregates both, talks to KSP & Godot
+```
+
+Currently: All on one device (Raspi) with bridge_python.
+
+## Recommendation
+
+**Use bridge_python (bridge_python/main.py) as your primary controller.**
+
+raspi_controller is available if you need it, but adds unnecessary complexity in the current setup.
+
+---
+
+See [ARCHITECTURE.md](../ARCHITECTURE.md) for system design details.
   },
   "pico": {
     "connected": true,

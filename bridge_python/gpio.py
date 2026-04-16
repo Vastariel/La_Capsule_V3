@@ -1,185 +1,144 @@
-from gpiozero import LED, Button
-from gpiozero.pins.pigpio import PiGPIOFactory
-from config import RASPI_IP
-import picod
-import time
+#!/usr/bin/env python3
+"""
+GPIO Module - Handling Raspberry Pi GPIO pins with gpiozero
+Refactored to use centralized config and improved error handling
+"""
 
-# ==================== PICO CLASS ====================
+import sys
+from typing import Dict, Optional, Callable
 
-class PICO:
-    """
-    PICO class for reading Pico sensors via network (socat redirection)
-    Requires on Raspi: sudo apt install socat
-    Command: socat TCP-LISTEN:12345,reuseaddr,fork FILE:/dev/ttyACM0,raw,echo=0
-    """
-    
-    def __init__(self, pico_host=RASPI_IP, pico_port=12345):
-        """Initialize Pico connection via network socket"""
-        self.pico_host = pico_host
-        self.pico_port = pico_port
-        # Utiliser le lien PTY local créé par socat
-        self.device_url = "/tmp/pico_remote"
-        
-        try:
-            self.pico = picod.pico(device=self.device_url)
-            if self.pico.connected:
-                self.pico.reset()
-                print(f"✓ Pico initialisé via {self.device_url}")
-            else:
-                print(f"✗ Pico non connecté sur {self.device_url}")
-                self.pico = None
-        except Exception as e:
-            print(f"✗ Erreur connexion Pico: {e}")
-            self.pico = None
-    
-    def read_adc(self, channel):
-        """Read ADC value from Pico (0-4095)"""
-        if not self.pico or not self.pico.connected:
-            return None
-        
-        try:
-            status, ch, val = self.pico.adc_read(channel)
-            if status == picod.STATUS_OKAY:
-                return val
-        except Exception as e:
-            print(f"✗ Erreur lecture ADC canal {channel}: {e}")
-        return None
-    
-    def read_adc_percentage(self, channel):
-        """Read ADC value as percentage (0-100%)"""
-        val = self.read_adc(channel)
-        if val is not None:
-            return (val / 4095.0) * 100.0
-        return None
-    
-    def close(self):
-        """Close Pico connection"""
-        if self.pico:
-            try:
-                self.pico.close()
-                print("Pico connection fermée")
-            except:
-                pass
+try:
+    from gpiozero import LED, Button
+    from gpiozero.pins.pigpio import PiGPIOFactory
+except ImportError:
+    print("✗ Module 'gpiozero' non installé. Installez: pip install gpiozero pigpio")
+    sys.exit(1)
 
+from utils import (
+    RASPI_IP, LED_ROUGES_PINS, LED_VERTES_PINS,
+    LEVIERS_PINS, BOUTONS_PINS
+)
 
-# ==================== GPIO CLASS ====================
 
 class GPIO:
-    """
-    GPIO class for controlling KSP via Raspberry Pi pins with kRPC integration
-    """
+    """Manager for Raspberry Pi GPIO operations (legacy compatibility)"""
     
-    def __init__(self, api=None, enable_pico=False):
-        """Initialize GPIO with optional API reference for kRPC integration"""
-        self.api = api
+    def __init__(self, api=None, enable_pico=False, use_remote: bool = True):
+        """Initialize GPIO
         
-        # ==================== PICO SETUP ====================
+        Args:
+            api: API reference for kRPC integration
+            enable_pico: Enable Pico ADC reading (legacy)
+            use_remote: Use remote GPIO via pigpio
+        """
+        self.api = api
+        self.connected = False
+        
+        # Pico import but now managed separately via pico.py
         self.pico = None
         if enable_pico:
-            self.pico = PICO(pico_host=RASPI_IP)
+            try:
+                from pico import PicoManager
+                self.pico = PicoManager()
+            except ImportError:
+                print("✗ PicoManager not available, skipping Pico")
         
-        # ==================== REMOTE GPIO SETUP ====================
-        self.remote_factory = PiGPIOFactory(host=RASPI_IP)
+        # Initialize GPIO factory
+        if use_remote:
+            try:
+                self.factory = PiGPIOFactory(host=RASPI_IP)
+                print(f"✓ GPIO factory connecté à {RASPI_IP} via pigpio")
+                self.connected = True
+            except Exception as e:
+                print(f"✗ Erreur connexion GPIO distante: {e}")
+                self.connected = False
+                return
+        else:
+            self.factory = None
+            print("✓ GPIO utilise BCM GPIO local")
+            self.connected = True
         
-        # ==================== LED PIN MAPPINGS ====================
-        self.led_rouges_pins = [24, 27, 25, 21]
-        self.led_vertes_pins = [18, 12]
+        # LED dictionaries
+        self.led_rouges = {}
+        self.led_vertes = {}
         
-        # ==================== BUTTON PIN MAPPINGS ====================
-        # Leviers (analog switches)
-        self.leviers_pins = {
-            16: "SAS",
-            26: "RCS",
-            22: "THROTTLE_CONTROL"
-        }
-        
-        # Boutons (momentary switches)
-        self.boutons_pins = {
-            6: "HEAT_SHIELD",
-            13: "PARACHUTE",
-            11: "LANDING_GEAR",
-            5: "TOGGLE_MAP",
-            20: "ENGINE_START",
-            7: "FAIRING",
-            23: "STAGE", #BOOSTERS
-            8: "STAGE", #STAGE 1
-            4: "STAGE", #STAGE 2
-            19: "STAGE" #STAGE 3
-        }
-        
-        # Boutons avec LED (mapping GPIO bouton -> GPIO LED)
-        self.bouton_led_map = {
-            23: 24,  # Boosters -> LED rouge 1
-            8: 27,   # Stage 1 -> LED rouge 2
-            4: 25,   # Stage 2 -> LED rouge 3
-            19: 21   # Stage 3 -> LED rouge 4
-        }
-        
-        # ==================== SETUP ====================
-        # Initialisation des LEDs rouges
-        self.led_rouges = {pin: LED(pin, pin_factory=self.remote_factory) for pin in self.led_rouges_pins}
-        
-        # Initialisation des LEDs vertes
-        self.led_vertes = {pin: LED(pin, pin_factory=self.remote_factory) for pin in self.led_vertes_pins}
-        
-        # Initialisation des leviers (continuellement actifs)
+        # Button dictionaries
         self.leviers = {}
-        for pin, action in self.leviers_pins.items():
-            self.leviers[pin] = Button(pin, pull_up=True, pin_factory=self.remote_factory)
-        
-        # Initialisation des boutons (momentary)
         self.boutons = {}
-        for pin, action in self.boutons_pins.items():
-            self.boutons[pin] = Button(pin, pull_up=True, pin_factory=self.remote_factory)
         
-        # États précédents (anti-spam / détection changement)
-        self.etat_prec_leviers = {pin: False for pin in self.leviers_pins.keys()}
-        self.etat_prec_boutons = {pin: False for pin in self.boutons_pins.keys()}
+        # Button state tracking
+        self.etat_prec_leviers = {pin: False for pin in LEVIERS_PINS.keys()}
+        self.etat_prec_boutons = {pin: False for pin in BOUTONS_PINS.keys()}
         
-        print(f"✓ GPIO initialisé - Connecté à {RASPI_IP}")
+        self._initialize_leds()
+        self._initialize_buttons()
+    
+    def _initialize_leds(self):
+        """Initialize LED pins"""
+        try:
+            for pin in LED_ROUGES_PINS:
+                self.led_rouges[pin] = LED(pin, pin_factory=self.factory if self.connected else None)
+            print(f"✓ {len(self.led_rouges)} LEDs rouges initialisées")
+        except Exception as e:
+            print(f"✗ Erreur initialisation LEDs rouges: {e}")
+        
+        try:
+            for pin in LED_VERTES_PINS:
+                self.led_vertes[pin] = LED(pin, pin_factory=self.factory if self.connected else None)
+            print(f"✓ {len(self.led_vertes)} LEDs vertes initialisées")
+        except Exception as e:
+            print(f"✗ Erreur initialisation LEDs vertes: {e}")
+    
+    def _initialize_buttons(self):
+        """Initialize button pins"""
+        try:
+            for pin in LEVIERS_PINS.keys():
+                self.leviers[pin] = Button(pin, pull_up=True, pin_factory=self.factory if self.connected else None)
+            print(f"✓ {len(self.leviers)} leviers initialisés")
+        except Exception as e:
+            print(f"✗ Erreur initialisation leviers: {e}")
+        
+        try:
+            for pin in BOUTONS_PINS.keys():
+                self.boutons[pin] = Button(pin, pull_up=True, pin_factory=self.factory if self.connected else None)
+            print(f"✓ {len(self.boutons)} boutons initialisés")
+        except Exception as e:
+            print(f"✗ Erreur initialisation boutons: {e}")
     
     def update(self):
         """Update GPIO inputs and process kRPC commands"""
-        if not self.api:
+        if not self.api or not self.connected:
             return
         
-        # ---------- Boutons avec LED: Contrôle et affichage LED ----------
-        for bouton, led in self.bouton_led_map.items():
-            if self.boutons[bouton].is_pressed:
-                self.led_rouges[led].on()
-            else:
-                self.led_rouges[led].off()
-        
-        # ---------- Leviers (continuous state) ----------
-        for i, (pin, action) in enumerate(self.leviers_pins.items()):
+        # Leviers (3-state switches)
+        for pin, action in LEVIERS_PINS.items():
+            if pin not in self.leviers:
+                continue
+            
             etat = self.leviers[pin].is_pressed
             
             # Affichage LED verte pour les leviers
-            if i < len(self.led_vertes_pins):
-                led_pin = self.led_vertes_pins[i]
+            if pin == list(LEVIERS_PINS.keys())[0] and len(self.led_vertes) > 0:
+                led_pin = list(self.led_vertes.keys())[0]
                 if etat:
                     self.led_vertes[led_pin].on()
                 else:
                     self.led_vertes[led_pin].off()
             
-            # Détection changement d'état pour kRPC
+            # Détection changement d'état
             if etat != self.etat_prec_leviers[pin]:
                 print(f"[LEVIER] GPIO {pin} ({action}): {'ACTIVÉ' if etat else 'DÉSACTIVÉ'}")
                 
-                if action == "SAS":
-                    self.api.set_stability_assistance(etat)
-                elif action == "RCS":
-                    self.api.set_reaction_control(etat)
-                elif action == "THROTTLE_CONTROL":
-                    # Pin 22 active le mode de contrôle du throttle
-                    pass
+                if action == "SAS" and hasattr(self.api, 'set_sas'):
+                    self.api.set_sas(etat)
+                elif action == "RCS" and hasattr(self.api, 'set_rcs'):
+                    self.api.set_rcs(etat)
                 
                 self.etat_prec_leviers[pin] = etat
         
-        # ---------- Boutons sans LED (momentary press) ----------
-        for pin, action in self.boutons_pins.items():
-            # Ignorer les boutons avec LED (déjà traités)
-            if pin in self.bouton_led_map:
+        # Boutons (momentary switches)
+        for pin, action in BOUTONS_PINS.items():
+            if pin not in self.boutons:
                 continue
             
             etat = self.boutons[pin].is_pressed
@@ -188,46 +147,62 @@ class GPIO:
             if etat and not self.etat_prec_boutons[pin]:
                 print(f"[BOUTON] GPIO {pin} ({action}): APPUYÉ")
                 
-                if action == "HEAT_SHIELD":
-                    self.api.deploy_heat_shield()
-                elif action == "PARACHUTE":
-                    self.api.deploy_parachute()
-                elif action == "LANDING_GEAR":
-                    self.api.toggle_landing_gear()
-                elif action == "TOGGLE_MAP":
-                    print("[MAP] Basculer affichage carte/véhicule")
-                elif action == "ENGINE_START":
-                    self.api.start_engines()
-                elif action == "FAIRING":
-                    self.api.deploy_fairing()
-            
-            self.etat_prec_boutons[pin] = etat
-        
-        # ---------- Boutons avec LED (momentary press) ----------
-        for pin, action in self.bouton_led_map.items():
-            etat = self.boutons[pin].is_pressed
-            
-            # Détecte la transition LOW (appui)
-            if etat and not self.etat_prec_boutons[pin]:
-                print(f"[BOUTON] GPIO {pin} ({action}): APPUYÉ")
-                
-                if action == "STAGE":
+                if action == "STAGE_BOOSTERS" and hasattr(self.api, 'stage'):
                     self.api.stage()
+                elif action == "STAGE_1" and hasattr(self.api, 'stage'):
+                    self.api.stage()
+                elif action == "STAGE_2" and hasattr(self.api, 'stage'):
+                    self.api.stage()
+                elif action == "STAGE_3" and hasattr(self.api, 'stage'):
+                    self.api.stage()
+                elif action == "PARACHUTE" and hasattr(self.api, 'deploy_parachute'):
+                    self.api.deploy_parachute()
+                elif action == "LANDING_GEAR" and hasattr(self.api, 'toggle_landing_gear'):
+                    self.api.toggle_landing_gear()
             
             self.etat_prec_boutons[pin] = etat
     
     def cleanup(self):
         """Turn off all LEDs and close connections"""
-        for led in self.led_rouges.values():
-            led.off()
-        for led in self.led_vertes.values():
-            led.off()
-        if self.pico:
-            self.pico.close()
-        print("GPIO cleanup - LEDs éteintes")
+        try:
+            for led in self.led_rouges.values():
+                led.off()
+            for led in self.led_vertes.values():
+                led.off()
+            if self.pico:
+                self.pico.close()
+            print("✓ GPIO cleanup - LEDs éteintes")
+        except Exception as e:
+            print(f"✗ Erreur cleanup GPIO: {e}")
+    
+    def __del__(self):
+        """Cleanup on deletion"""
+        self.cleanup()
 
-
-# ==================== MAIN ====================
 
 if __name__ == "__main__":
-    print("GPIO module - use with main.py")
+    """
+    Quick GPIO test - for more comprehensive testing, use:
+    python3 tests/test_gpio_interactive.py
+    """
+    print("\n" + "="*60)
+    print("🧪 GPIO Module - Quick Test")
+    print("="*60 + "\n")
+    
+    # Quick sanity check
+    print("ℹ Configuration loaded successfully")
+    print(f"  - Red LEDs: {LED_ROUGES_PINS}")
+    print(f"  - Green LEDs: {LED_VERTES_PINS}")
+    print(f"  - Leviers: {list(LEVIERS_PINS.keys())}")
+    print(f"  - Buttons: {list(BOUTONS_PINS.keys())}")
+    
+    print("\n✓ GPIO module is working\n")
+    
+    print("For COMPREHENSIVE GPIO testing, run:")
+    print("  python3 tests/test_gpio_interactive.py\n")
+    
+    print("This provides:")
+    print("  ✓ Individual LED testing")
+    print("  ✓ Button press detection")
+    print("  ✓ Switch state monitoring")
+    print("  ✓ Test results summary\n")

@@ -1,8 +1,26 @@
-#KRPC connection configuration
-KSP_IP         = '192.168.1.25'
-RPC_PORT       = 50008
-STREAM_PORT    = 50001
+"""
+Legacy config.py - Now loads from utils/config_loader
+This file is kept for backward compatibility.
+"""
 
-# Raspberry Pi GPIO/Godot configuration
-RASPI_IP       = '192.168.1.56'
-FPS            = 30
+from utils.config_loader import (
+    KSP_IP, RPC_PORT, STREAM_PORT,
+    RASPI_IP, FPS,
+    WS_HOST, WS_PORT, WS_PATH,
+    PICO_PORT, PICO_BAUD,
+    LED_ROUGES_PINS, LED_VERTES_PINS,
+    LEVIERS_PINS, BOUTONS_PINS,
+    THROTTLE_SMOOTHING_WINDOW, THROTTLE_DEADZONE,
+    REFRESH_CRITICAL, REFRESH_IMPORTANT, REFRESH_NORMAL
+)
+
+__all__ = [
+    "KSP_IP", "RPC_PORT", "STREAM_PORT",
+    "RASPI_IP", "FPS",
+    "WS_HOST", "WS_PORT", "WS_PATH",
+    "PICO_PORT", "PICO_BAUD",
+    "LED_ROUGES_PINS", "LED_VERTES_PINS",
+    "LEVIERS_PINS", "BOUTONS_PINS",
+    "THROTTLE_SMOOTHING_WINDOW", "THROTTLE_DEADZONE",
+    "REFRESH_CRITICAL", "REFRESH_IMPORTANT", "REFRESH_NORMAL"
+]
