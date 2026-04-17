@@ -1,7 +1,7 @@
 {
   "network": {
     "ksp_pc": {
-      "ip": "192.168.1.27",
+      "ip": "192.168.1.31",
       "krpc_rpc_port": 50008,
       "krpc_stream_port": 50001,
       "description": "PC exécutant KSP avec kRPC"
