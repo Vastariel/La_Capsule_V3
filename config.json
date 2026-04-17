@@ -1,0 +1,167 @@
+{
+  "krpc": {
+    "host": "192.168.1.31",
+    "rpc_port": 50008,
+    "stream_port": 50001,
+    "timeout_seconds": 300,
+    "retry_interval_seconds": 3,
+    "description": "KRPC server connection parameters"
+  },
+
+  "network": {
+    "ksp_pc": {
+      "ip": "192.168.1.31",
+      "krpc_rpc_port": 50008,
+      "krpc_stream_port": 50001,
+      "description": "PC exécutant KSP avec kRPC"
+    },
+    "raspi": {
+      "ip": "192.168.1.56",
+      "hostname": "raspberrypi.local",
+      "description": "Raspberry Pi 4 contrôleur central"
+    },
+    "websocket": {
+      "host": "0.0.0.0",
+      "port": 8080,
+      "path": "/telemetry",
+      "description": "WebSocket server broadcasting telemetry"
+    }
+  },
+
+  "hardware": {
+    "pico": {
+      "port": "/dev/ttyACM0",
+      "baud_rate": 115200,
+      "description": "Microcontrôleur RP2040 pour capteurs ADC",
+      "adc_channels": {
+        "0": "Throttle potentiometer"
+      }
+    },
+    
+    "gpio_raspi": {
+      "leds_rouges": [24, 27, 25, 21],
+      "leds_vertes": [18, 12],
+      
+      "leviers": {
+        "16": "SAS",
+        "26": "RCS",
+        "22": "THROTTLE_CONTROL"
+      },
+      
+      "boutons": {
+        "6": "HEAT_SHIELD",
+        "13": "PARACHUTE",
+        "11": "LANDING_GEAR",
+        "5": "TOGGLE_MAP",
+        "20": "ENGINE_START",
+        "7": "FAIRING",
+        "23": "STAGE_BOOSTERS",
+        "8": "STAGE_1",
+        "4": "STAGE_2",
+        "19": "STAGE_3"
+      }
+    }
+  },
+
+  "action_groups": {
+    "0": {
+      "name": "ENGINE_START",
+      "button": 20,
+      "description": "Allumage moteur"
+    },
+    "1": {
+      "name": "STAGE_BOOSTERS",
+      "button": 23,
+      "led": 24,
+      "description": "Découpage boosters"
+    },
+    "2": {
+      "name": "STAGE_1",
+      "button": 8,
+      "led": 27,
+      "description": "Découpage étage 1"
+    },
+    "3": {
+      "name": "STAGE_2",
+      "button": 4,
+      "led": 25,
+      "description": "Découpage étage 2"
+    },
+    "4": {
+      "name": "STAGE_3",
+      "button": 19,
+      "led": 21,
+      "description": "Découpage étage 3"
+    },
+    "5": {
+      "name": "PARACHUTE",
+      "button": 13,
+      "description": "Déploiement parachute"
+    },
+    "6": {
+      "name": "HEAT_SHIELD",
+      "button": 6,
+      "description": "Bouclier thermique"
+    },
+    "9": {
+      "name": "FAIRING",
+      "button": 7,
+      "description": "Ouverture coiffe"
+    }
+  },
+
+  "special_actions": {
+    "landing_gear": {
+      "button": 11,
+      "description": "Toggle landing gear via control.brakes"
+    },
+    "map_toggle": {
+      "button": 5,
+      "mode_from": "map",
+      "mode_to": "automatic",
+      "description": "Basculer entre MAP et mode automatique"
+    }
+  },
+
+  "throttle": {
+    "description": "Configuration du potentiomètre throttle (lever 22 doit être ON)",
+    "levier_22_required": true,
+    "levier_22_name": "THROTTLE_CONTROL",
+    "potentiometer_adc_channel": 0,
+    "smoothing": {
+      "enabled": true,
+      "window_size": 10
+    },
+    "deadzone_percent": 2.0,
+    "change_threshold_percent": 1.0
+  },
+
+  "performance": {
+    "fps": 30,
+    "main_loop_hz": 10,
+    "websocket_update_interval_ms": 100,
+    "throttle_smoothing_window": 10,
+    "throttle_deadzone_percent": 2.0,
+    "throttle_change_threshold_percent": 1.0
+  },
+
+  "telemetry": {
+    "refresh_rates": {
+      "critical": 1,
+      "important": 5,
+      "normal": 10,
+      "description": "Taux de rafraîchissement en frames (30 FPS base)"
+    },
+    "tracked_resources": [
+      "LiquidFuel",
+      "Oxidizer",
+      "Monopropellant"
+    ]
+  },
+
+  "logging": {
+    "level": "INFO",
+    "file": "/tmp/bridge.log",
+    "console": true
+  }
+}

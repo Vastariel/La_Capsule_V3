@@ -42,8 +42,8 @@ class GPIOTester:
     def _initialize_gpio(self):
         """Initialize GPIO manager"""
         try:
-            from gpio import GPIO
-            self.gpio = GPIO(api=None, enable_pico=False, use_remote=self.use_remote)
+            from gpio_handler import GPIOHandler
+            self.gpio = GPIOHandler(krpc=None, pico=None, config=None, use_remote=self.use_remote)
             if self.gpio.connected:
                 print("✓ GPIO initialized")
             else:

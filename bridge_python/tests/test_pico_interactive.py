@@ -27,14 +27,14 @@ class PicoTester:
     def _initialize_pico(self):
         """Initialize Pico manager"""
         try:
-            from pico import PicoManager
-            self.pico = PicoManager(port=PICO_PORT)
+            from pico_handler import PicoHandler
+            self.pico = PicoHandler(port=PICO_PORT)
             if self.pico.connected:
                 print("✓ Pico initialized")
             else:
                 print("⚠ Pico not connected - check USB connection")
         except ImportError:
-            print("✗ PicoManager module not available")
+            print("✗ PicoHandler module not available")
         except Exception as e:
             print(f"✗ Error initializing Pico: {e}")
     

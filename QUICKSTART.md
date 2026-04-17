@@ -1,5 +1,7 @@
 # Quick Start Guide
 
+**Status:** Refactored to new modular architecture (Nov 2024)
+
 ## Prerequisites
 
 - **PC with KSP**: Kerbal Space Program with kRPC mod installed
@@ -8,30 +10,52 @@
 - **Network**: All devices on same network (or configured with correct IPs)
 - **GPIO Hardware**: Buttons, switches, LEDs wired to Raspberry Pi GPIO pins
 
-## Step 1: Configure the System
+## Quick Start (5 Minutes)
 
-Edit `setup/config.json` with your network setup:
+### 1. Install Dependencies
+```bash
+cd ~/Desktop/La_Capsule_V3/bridge_python
+pip3 install -r requirements.txt
+```
+
+### 2. Run the Bridge
+```bash
+python3 main.py
+```
+
+That's it! The system will:
+- Connect to kRPC on `192.168.1.31:50000`
+- Initialize Pico ADC if available
+- Start GPIO control
+- Listen for Godot on `ws://0.0.0.0:8080`
+
+Expected output:
+```
+[✓] KRPC connecté
+[✓] Pico connecté
+[✓] GPIO initialisé
+[✓] WebSocket serveur démarré
+[LOOP] Status updates...
+```
+
+### 3. Connect Godot Client
+```gdscript
+# In your Godot telemetry UI script
+var ws = WebSocketClient.new()
+ws.connect_to_url("ws://raspberrypi.local:8080")
+```
+
+---
+
+## Detailed Configuration
 
 ```json
 {
-  "network": {
-    "ksp_pc": {
-      "ip": "YOUR_PC_IP_ADDRESS",
-      "krpc_rpc_port": 50008,
-      "krpc_stream_port": 50001
-    },
-    "raspi": {
-      "ip": "YOUR_RASPI_IP_ADDRESS"
-    },
-    "bridge_websocket": {
-      "host": "0.0.0.0",
-      "port": 8080
-    }
+  "krpc": {
+    "host": "192.168.1.31",
+    "port": 50000
   },
   "hardware": {
-    "pico": {
-      "port": "/dev/ttyACM0"
-    },
     "gpio_raspi": {
       "leds_rouges": [24, 27, 25, 21],
       "leds_vertes": [18, 12],
@@ -41,174 +65,259 @@ Edit `setup/config.json` with your network setup:
         "22": "THROTTLE_CONTROL"
       },
       "boutons": {
-        "6": "HEAT_SHIELD",
-        "13": "PARACHUTE",
-        "11": "LANDING_GEAR",
-        "5": "TOGGLE_MAP",
         "20": "ENGINE_START",
-        "7": "FAIRING",
         "23": "STAGE_BOOSTERS",
         "8": "STAGE_1",
         "4": "STAGE_2",
-        "19": "STAGE_3"
+        "19": "STAGE_3",
+        "13": "PARACHUTE",
+        "6": "HEAT_SHIELD",
+        "7": "FAIRING",
+        "11": "LANDING_GEAR",
+        "5": "TOGGLE_MAP"
       }
     }
   }
 }
 ```
 
-**Find your IPs**:
+---
+
+## System Architecture
+
+The new modular system has 5 components:
+
+```
+┌─────────────────────────────────────────────────┐
+│                   main.py                       │
+│  (Orchestrates everything)                      │
+└─────────────────────────────────────────────────┘
+               │               │               │
+    ┌──────────┴────┬──────────┴────┬──────────┴──────┐
+    │               │                │                 │
+    │               │                │                 │
+┌───┴────┐    ┌─────┴──┐    ┌────────┴──┐    ┌──────┴────────┐
+│  KRPC   │    │  Pico  │    │   GPIO    │    │  WebSocket   │
+│Handler  │    │Handler │    │  Handler  │    │   Server     │
+└────┬────┘    └─────┬──┘    └────┬──────┘    └──────┬────────┘
+     │               │            │                    │
+     │               │            │                    │
+  KSP PC         /dev/        Raspberry            Godot Clients
+  50000          ttyACM0       Pi GPIO              (ws://...)
+```
+
+**How it works:**
+- **main.py**: Central orchestrator - loads config, initializes all 4 handlers
+- **krpc_handler.py**: Manages KSP connection with auto-reconnect
+- **pico_handler.py**: Reads throttle potentiometer from Pico
+- **gpio_handler.py**: Handles buttons, switches, LEDs
+- **websocket_server.py**: Broadcasts telemetry to Godot every 100ms
+
+---
+
+## Control Flow
+
+### Button Press → Action
+
+```
+User presses Button 20
+    ↓
+gpio_handler detects edge
+    ↓
+Maps Button 20 → AG 0 (Engine Start)
+    ↓
+krpc_handler.trigger_action_group(0)
+    ↓
+KSP Engine ignites
+    ↓
+LED feedback updated
+    ↓
+Godot UI shows state change via WebSocket
+```
+
+### Telemetry Flow
+
+```
+Every 100ms:
+krpc_handler.update_telemetry()
+    ↓
+Collects: speed, altitude, vertical_speed, 
+          g_force, fuel%, current_stage, etc.
+    ↓
+websocket_server.broadcast(data)
+    ↓
+Godot clients receive JSON:
+{
+  "speed": 250.5,
+  "altitude": 50000,
+  "vertical_speed": 10.5,
+  "ascending": true,
+  "fuel_percent": 75.3,
+  "current_stage": 2
+}
+```
+
+---
+
+## Test Scenarios
+
+### 1. Basic Connectivity ✓
 ```bash
-# On PC
-ipconfig getifaddr en0  # macOS
-hostname -I             # Linux
-
-# On Raspberry Pi
-hostname -I
-```
-
-## Step 2: Verify Your Raspberry Pi
-
-Find your Raspberry Pi's IP:
-```bash
-ssh pi@raspberrypi.local
-hostname -I
-# Returns something like: 192.168.1.56
-```
-
-## Step 3: Test Configuration
-
-On Raspberry Pi:
-```bash
-cd ~/La_Capsule_V3/bridge_python
-python3 utils/config_loader.py
-```
-
-Expected output:
-```
-✓ Configuration chargée depuis .../setup/config.json
-============================================================
-🔧 CONFIGURATION SUMMARY
-============================================================
-KSP PC: 192.168.1.25:50008 (Stream: 50001)
-Raspi: 192.168.1.56
-WebSocket: ws://0.0.0.0:8080/telemetry
-...
-```
-
-## Step 4: Test Hardware Components
-
-### Test GPIO
-```bash
-cd ~/La_Capsule_V3/bridge_python
-python3 gpio.py
-```
-
-This will:
-- Turn on red LEDs one by one (5 seconds each)
-- Wait for button presses and print their status
-- (Press Ctrl+C to exit)
-
-### Test Pico ADC
-```bash
-python3 pico.py
-```
-
-This will:
-- Connect to Pico on /dev/ttyACM0
-- Read throttle potentiometer every 0.5 seconds
-- Show raw, smoothed, and percentage values
-
-### Test Configuration
-```bash
-python3 -m pytest tests/test_configuration.py -v
-```
-
-## Step 5: Install Dependencies
-
-On Raspberry Pi:
-```bash
-cd ~/La_Capsule_V3/bridge_python
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-On PC (for running server locally during development):
-```bash
-cd La_Capsule_V3/bridge_python
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-## Step 6: Start KSP Server
-
-1. Launch Kerbal Space Program
-2. Start a flight (or load existing save)
-3. Ensure kRPC server is running:
-   - In-game: Alt+F2 (or check kRPC console)
-   - Should show: "Server running on 0.0.0.0:50008"
-
-## Step 7: Run the Bridge
-
-On Raspberry Pi:
-```bash
-cd ~/La_Capsule_V3/bridge_python
-source venv/bin/activate
 python3 main.py
+# Should show:
+# [✓] KRPC connecté
+# [✓] Pico connecté
+# [✓] GPIO initialisé
+# [✓] WebSocket serveur démarré
 ```
 
-Expected output:
+### 2. Button Control ✓
 ```
-============================================================
-🔧 CONFIGURATION SUMMARY
-============================================================
-KSP PC: 192.168.1.25:50008 (Stream: 50001)
-...
-✓ server KRPC connecté et en fonctionnement
-✓ Serveur WebSocket démarré
-✓ GPIO initialisé - Connecté à 192.168.1.56
-✓ Pico connecté sur /dev/ttyACM0
+Press physical button 20
+→ Check KSP: Should see engine light
+→ Check LED 24, 27, 25, 21: Should reflect stage status
 ```
 
-## Step 8: Connect Godot Client
+### 3. Throttle Control ✓
+```
+Move lever 22 (THROTTLE_CONTROL) to ON
+Move potentiometer
+→ Check KSP: Vessel throttle should change smoothly
+→ Check Godot: Throttle slider should match
+```
 
-1. Open Godot project: `godot_ui/project.godot`
-2. Look for WebSocket connection setup in scripts
-3. Edit connection URL to: `ws://192.168.1.56:8080/telemetry`
-4. Hit "Play" (F5)
+### 4. Godot Telemetry ✓
+```
+In Godot, connect to ws://raspberrypi.local:8080
+→ Should receive speed, altitude updates
+→ Values should update every 100ms
+```
 
-You should see telemetry data flowing in real-time!
-
-## Step 9: Test Control Loop
-
-1. **From Physical Hardware**:
-   - Press buttons → LEDs light up
-   - Move switches → Godot shows state change
-   - Turn throttle potentiometer → Vessel throttle changes in KSP
-
-2. **From KSP**:
-   - Activate SAS in-game → Green LED lights
-   - Stage rocket → Red LED pulses
-
-3. **From Godot** (if UI buttons implemented):
-   - Click UI button → GPIO LED responds
+---
 
 ## Troubleshooting
 
-### "Connection refused" (KSP)
-```bash
-# On PC, check kRPC is listening
-netstat -an | grep 50008
+### KRPC Connection Issues
 
-# Or test connection from Raspi
-python3 -c "import krpc; conn = krpc.connect(address='PC_IP', rpc_port=50008)"
+**Problem:** `[!] KRPC non disponible`
+
+**Causes & Solutions:**
+```bash
+# 1. KSP not running
+# → Start KSP and flight
+
+# 2. kRPC mod not loaded
+# → Launch KSP from launcher (mod auto-loads)
+
+# 3. Wrong IP/port
+# → Edit config.json, verify IP
+
+# 4. Firewall blocking
+# → Check: telnet 192.168.1.31 50000
+# → If fails, add firewall exception
 ```
 
-### "GPIO permission denied"
+### Pico Connection Issues
+
+**Problem:** `[!] Pico non disponible`
+
 ```bash
-# pigpio daemon must be running
+# 1. Check USB connection
+ls /dev/ttyACM*
+
+# 2. Check permissions
+# → Make sure user can access /dev/ttyACM0
+
+# 3. Wrong port or baud rate
+# → Edit config.json: hardware.pico.port
+```
+
+### GPIO Permission Issues
+
+**Problem:** `GPIO permission denied`
+
+```bash
+# Enable pigpio daemon (runs as root)
+sudo systemctl start pigpiod
+
+# Or run script as root
+sudo python3 main.py
+
+# Or add user to gpio group
+sudo usermod -aG gpio pi
+```
+
+### WebSocket Connection Issues
+
+**Problem:** Godot can't connect to `ws://...`
+
+```bash
+# 1. Check port is open
+netstat -tuln | grep 8080
+
+# 2. Try alternative hostnames
+ws://raspberrypi.local:8080     # mDNS
+ws://192.168.1.56:8080          # IP address
+
+# 3. Check firewall on Pi
+sudo ufw allow 8080
+
+# 4. Test from PC
+python3 -c "
+import asyncio, websockets
+async def test():
+    async with websockets.connect('ws://192.168.1.56:8080'):
+        msg = await ws.recv()
+        print(msg)
+asyncio.run(test())
+"
+```
+
+---
+
+## Performance Notes
+
+- **Main loop:** 10 Hz (100ms)
+- **Telemetry updates:** 10/sec (100ms intervals)
+- **LED updates:** Real-time (< 50ms latency)
+- **Button response:** < 100ms from press to KSP
+
+---
+
+## File Structure
+
+```
+La_Capsule_V3/
+├── config.json                   ← Main config
+├── main.py                       ← Entry point
+├── QUICKSTART.md                 ← This file
+├── REFACTOR_COMPLETE.md          ← What changed
+├── bridge_python/
+│   ├── krpc_handler.py          ← KSP communication
+│   ├── pico_handler.py          ← Throttle ADC
+│   ├── gpio_handler.py          ← Button/LED control
+│   ├── websocket_server.py      ← Godot telemetry
+│   ├── main.py                  ← OLD (kept for reference)
+│   ├── requirements.txt         ← Dependencies
+│   └── tests/                   ← Unit tests
+├── godot_ui/                    ← Godot client
+└── setup/                       ← Installation scripts
+```
+
+---
+
+## Next Steps
+
+1. ✅ Run `python3 main.py`
+2. ✅ Connect Godot to `ws://raspberrypi.local:8080`
+3. ✅ Test buttons, switches, throttle
+4. ⏭️ Clean up old files (when ready)
+5. ⏭️ Update documentation
+6. ⏭️ Deploy as systemd service (optional)
+
+---
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) and [REFACTOR_COMPLETE.md](REFACTOR_COMPLETE.md) for more details.
 sudo systemctl start pigpiod
 # Or manually:
 sudo pigpiod

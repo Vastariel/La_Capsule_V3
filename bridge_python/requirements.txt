@@ -1,30 +1,14 @@
-# KSP Remote Control Bridge Requirements
+# La Capsule V3 - KSP Hardware Control Bridge
 # Python 3.9+
 
-# ===== KRPC Communication =====
-krpc==0.5.2
+# ===== Core Dependencies =====
+krpc==0.5.2                 # kRPC client for Kerbal Space Program
+websockets>=12.0            # WebSocket server for Godot communication
+gpiozero>=2.0.0             # GPIO control library
+pigpio>=1.78                # GPIO daemon for remote Pi control
+picod>=1.0                  # Pico ADC communication
 
-# ===== WebSocket (Godot communication) =====
-websockets>=12.0
-
-# ===== GPIO & Hardware Control =====
-gpiozero>=2.0.0
-pigpio>=1.78
-
-# ===== Pico Communication =====
-picod>=1.0
-
-# ===== Async & Threading =====
-asyncio-contextmanager>=1.0.0
-
-# ===== Utilities =====
-python-dotenv>=1.0.0  # For .env file support
-aiofiles>=23.0.0       # Async file operations
-
-# ===== Development & Testing =====
-pytest>=7.0.0
-pytest-asyncio>=0.20.0
-pytest-cov>=4.0.0
-black>=23.0.0
-pylint>=3.0.0
-mypy>=1.0.0
+# Optional: Development & Testing
+# pytest>=7.0.0
+# black>=23.0.0
+# pylint>=3.0.0
