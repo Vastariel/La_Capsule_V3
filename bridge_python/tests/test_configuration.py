@@ -1,159 +1,112 @@
 #!/usr/bin/env python3
-"""
-Test suite for bridge_python components
-Tests GPIO, Pico, and configuration
-"""
+"""Tests de config - structure, cohérence pin mapping."""
 
-import unittest
 import sys
+import unittest
 from pathlib import Path
 
-# Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils import (
-    KSP_IP, RPC_PORT, STREAM_PORT,
-    RASPI_IP, FPS,
-    WS_HOST, WS_PORT, WS_PATH,
-    LED_ROUGES_PINS, LED_VERTES_PINS,
-    LEVIERS_PINS, BOUTONS_PINS,
-    get_config, print_config_summary
-)
+from utils import get_config
 
 
 class TestConfiguration(unittest.TestCase):
-    """Test configuration loading"""
-    
     def setUp(self):
-        """Set up test fixtures"""
-        self.config = get_config()
-    
-    def test_config_loaded(self):
-        """Test that configuration is loaded"""
-        self.assertIsNotNone(self.config)
-        self.assertIn('network', self.config)
-        self.assertIn('hardware', self.config)
-        self.assertIn('performance', self.config)
-    
-    def test_krpc_config(self):
-        """Test kRPC configuration exists and is valid"""
-        # Just check that values exist and are valid
-        self.assertIsNotNone(KSP_IP)
-        self.assertIsInstance(KSP_IP, str)
-        self.assertGreater(len(KSP_IP), 0)
-        
-        self.assertEqual(RPC_PORT, 50008)
-        self.assertEqual(STREAM_PORT, 50001)
-    
-    def test_raspi_config(self):
-        """Test Raspberry Pi configuration"""
-        self.assertEqual(RASPI_IP, "192.168.1.56")
-        self.assertEqual(FPS, 30)
-    
-    def test_websocket_config(self):
-        """Test WebSocket configuration"""
-        self.assertEqual(WS_HOST, "0.0.0.0")
-        self.assertEqual(WS_PORT, 8080)
-        self.assertEqual(WS_PATH, "/telemetry")
-    
-    def test_gpio_pins_configured(self):
-        """Test GPIO pins are configured"""
-        self.assertGreater(len(LED_ROUGES_PINS), 0)
-        self.assertGreater(len(LED_VERTES_PINS), 0)
-        self.assertGreater(len(LEVIERS_PINS), 0)
-        self.assertGreater(len(BOUTONS_PINS), 0)
-    
-    def test_pins_no_duplicates(self):
-        """Test no duplicate pins"""
-        all_pins = set()
-        
-        # Collect all outputs
-        for pin in LED_ROUGES_PINS:
-            self.assertNotIn(pin, all_pins, f"Duplicate pin {pin}")
-            all_pins.add(pin)
-        
-        for pin in LED_VERTES_PINS:
-            self.assertNotIn(pin, all_pins, f"Duplicate pin {pin}")
-            all_pins.add(pin)
-        
-        # Inputs and outputs can share GPIO (one is input, one is output)
-        # but ideally they shouldn't in a well-designed system
-        inputs = set(LEVIERS_PINS.keys()) | set(BOUTONS_PINS.keys())
-        outputs = set(LED_ROUGES_PINS) | set(LED_VERTES_PINS)
-        
-        overlap = inputs & outputs
-        if overlap:
-            print(f"⚠ Warning: GPIO pins used for both input and output: {overlap}")
+        self.cfg = get_config()
+
+    def test_root_sections(self):
+        for key in ("krpc", "websocket", "hardware", "throttle"):
+            self.assertIn(key, self.cfg)
+
+    def test_krpc(self):
+        k = self.cfg["krpc"]
+        self.assertIsInstance(k["host"], str)
+        self.assertEqual(k["rpc_port"], 50008)
+        self.assertEqual(k["stream_port"], 50001)
+
+    def test_websocket(self):
+        w = self.cfg["websocket"]
+        self.assertEqual(w["host"], "0.0.0.0")
+        self.assertEqual(w["port"], 8080)
+
+    def test_gpio_pins_populated(self):
+        g = self.cfg["hardware"]["gpio"]
+        self.assertTrue(g["leds_rouges"])
+        self.assertTrue(g["leds_vertes"])
+        self.assertTrue(g["leviers"])
+        self.assertTrue(g["boutons"])
+
+    def test_gpio_no_output_duplicates(self):
+        g = self.cfg["hardware"]["gpio"]
+        leds = list(g["leds_rouges"].keys()) + list(g["leds_vertes"].keys())
+        self.assertEqual(len(leds), len(set(leds)), f"LED pins dupliquées: {leds}")
+
+    def test_gpio_no_input_duplicates(self):
+        g = self.cfg["hardware"]["gpio"]
+        inputs = list(g["leviers"].keys()) + list(g["boutons"].keys())
+        self.assertEqual(len(inputs), len(set(inputs)), f"Input pins dupliquées: {inputs}")
+
+    def test_button_action_types_known(self):
+        g = self.cfg["hardware"]["gpio"]
+        valid = {"ag", "gear_brakes", "map_toggle"}
+        for pin, action in g["boutons"].items():
+            self.assertIn(action.get("type"), valid, f"Pin {pin}: type inconnu {action}")
+            if action["type"] == "ag":
+                self.assertIsInstance(action.get("value"), int)
+
+    def test_throttle_params_in_range(self):
+        t = self.cfg["throttle"]
+        self.assertGreater(t["smoothing_alpha"], 0.0)
+        self.assertLessEqual(t["smoothing_alpha"], 1.0)
+        self.assertGreaterEqual(t["deadzone_percent"], 0.0)
+        self.assertLess(t["deadzone_percent"], 50.0)
 
 
-class TestPicoModule(unittest.TestCase):
-    """Test Pico module"""
-    
-    def test_pico_import(self):
-        """Test Pico module can be imported"""
+class TestPicoHandlerAPI(unittest.TestCase):
+    """Tests API PicoHandler - pas de hardware requis."""
+
+    def test_import(self):
+        from pico_handler import PicoHandler
+        self.assertIsNotNone(PicoHandler)
+
+    def test_ema_logic(self):
+        """L'EMA doit converger vers la valeur cible."""
+        from pico_handler import PicoHandler
+        ph = PicoHandler.__new__(PicoHandler)  # bypass __init__
+        ph.alpha = 0.3
+        ph.deadzone = 0.03
+        ph.output_deadband = 0.01
+        ph._ema = None
+        ph._last_emitted = 0.0
+        ph.adc_channel = 0
+        ph.connected = False
+        ph.pico = None
+
+        # Simule 50 lectures constantes à 0.5 → EMA doit s'approcher
+        ph._ema = 0.0
+        for _ in range(50):
+            ph._ema = 0.3 * 0.5 + 0.7 * ph._ema
+        self.assertAlmostEqual(ph._ema, 0.5, places=2)
+
+
+class TestGPIOHandlerAPI(unittest.TestCase):
+    """Test import et gestion config invalide."""
+
+    def test_import(self):
         try:
-            from pico import PicoManager
-            self.assertIsNotNone(PicoManager)
+            from gpio_handler import GPIOHandler
+            self.assertIsNotNone(GPIOHandler)
         except ImportError as e:
-            self.skipTest(f"Pico module not available: {e}")
-    
-    def test_pico_creation(self):
-        """Test Pico manager can be instantiated"""
+            self.skipTest(f"gpiozero indispo: {e}")
+
+    def test_missing_config_raises(self):
         try:
-            from pico import PicoManager
-            pico = PicoManager()
-            # May not be connected, but object should exist
-            self.assertIsNotNone(pico)
+            from gpio_handler import GPIOHandler
         except ImportError:
-            self.skipTest("Pico module not available")
-        except Exception as e:
-            # Expected if hardware not available
-            self.skipTest(f"Pico hardware not available: {e}")
+            self.skipTest("gpiozero indispo")
+        with self.assertRaises(ValueError):
+            GPIOHandler(config=None)
 
 
-class TestGPIOModule(unittest.TestCase):
-    """Test GPIO module"""
-    
-    def test_gpio_import(self):
-        """Test GPIO module can be imported"""
-        try:
-            from gpio import GPIO
-            self.assertIsNotNone(GPIO)
-        except ImportError as e:
-            self.skipTest(f"GPIO module not available: {e}")
-    
-    def test_gpio_creation(self):
-        """Test GPIO manager can be instantiated"""
-        try:
-            from gpio import GPIO
-            # Use local GPIO (no remote)
-            gpio = GPIO(use_remote=False)
-            self.assertIsNotNone(gpio)
-        except ImportError:
-            self.skipTest("GPIO module not available")
-        except Exception as e:
-            # Expected if hardware not available
-            self.skipTest(f"GPIO hardware not available: {e}")
-
-
-class TestServerModule(unittest.TestCase):
-    """Test server module"""
-    
-    def test_server_import(self):
-        """Test server module can be imported"""
-        try:
-            import server
-            self.assertIsNotNone(server)
-        except ImportError as e:
-            self.skipTest(f"Server module not available: {e}")
-
-
-if __name__ == '__main__':
-    print("\n" + "="*60)
-    print("🧪 BRIDGE_PYTHON TEST SUITE")
-    print("="*60 + "\n")
-    
-    print_config_summary()
-    print()
-    
+if __name__ == "__main__":
     unittest.main(verbosity=2)

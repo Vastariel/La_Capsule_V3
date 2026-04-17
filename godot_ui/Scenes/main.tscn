@@ -10,6 +10,7 @@ script = ExtResource("1_bo1nx")
 [node name="GameScreen" parent="." instance=ExtResource("2_8gbba")]
 
 [node name="ConnectionWindow" type="Window" parent="."]
+visible = false
 position = Vector2i(280, 170)
 size = Vector2i(500, 300)
 script = ExtResource("3_8gbba")

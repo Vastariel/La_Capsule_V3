@@ -1,30 +1,6 @@
 #!/usr/bin/env python3
-"""Utils package for bridge_python"""
+"""Utils package for bridge_python."""
 
-from .config_loader import (
-    CONFIG,
-    KSP_IP, RPC_PORT, STREAM_PORT,
-    RASPI_IP, FPS,
-    WS_HOST, WS_PORT, WS_PATH,
-    PICO_PORT, PICO_BAUD, PICO_ADC_CHANNELS,
-    LED_ROUGES_PINS, LED_VERTES_PINS,
-    LEVIERS_PINS, BOUTONS_PINS,
-    THROTTLE_SMOOTHING_WINDOW, THROTTLE_DEADZONE, THROTTLE_CHANGE_THRESHOLD,
-    REFRESH_CRITICAL, REFRESH_IMPORTANT, REFRESH_NORMAL,
-    LOG_LEVEL, LOG_FILE, LOG_TO_CONSOLE,
-    get_config, print_config_summary
-)
+from .config_loader import CONFIG, get_config, print_config_summary
 
-__all__ = [
-    "CONFIG",
-    "KSP_IP", "RPC_PORT", "STREAM_PORT",
-    "RASPI_IP", "FPS",
-    "WS_HOST", "WS_PORT", "WS_PATH",
-    "PICO_PORT", "PICO_BAUD", "PICO_ADC_CHANNELS",
-    "LED_ROUGES_PINS", "LED_VERTES_PINS",
-    "LEVIERS_PINS", "BOUTONS_PINS",
-    "THROTTLE_SMOOTHING_WINDOW", "THROTTLE_DEADZONE", "THROTTLE_CHANGE_THRESHOLD",
-    "REFRESH_CRITICAL", "REFRESH_IMPORTANT", "REFRESH_NORMAL",
-    "LOG_LEVEL", "LOG_FILE", "LOG_TO_CONSOLE",
-    "get_config", "print_config_summary"
-]
+__all__ = ["CONFIG", "get_config", "print_config_summary"]
