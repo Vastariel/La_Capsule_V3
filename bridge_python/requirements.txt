@@ -1,0 +1,14 @@
+# La Capsule V3 - KSP Hardware Control Bridge
+# Python 3.9+
+
+# ===== Core Dependencies =====
+krpc==0.5.2                 # kRPC client for Kerbal Space Program
+websockets>=12.0            # WebSocket server for Godot communication
+gpiozero>=2.0.0             # GPIO control library
+pigpio>=1.78                # GPIO daemon for remote Pi control
+picod>=1.0                  # Pico ADC communication
+
+# Optional: Development & Testing
+# pytest>=7.0.0
+# black>=23.0.0
+# pylint>=3.0.0
