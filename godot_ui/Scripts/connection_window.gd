@@ -3,7 +3,7 @@ extends Window
 @onready var ip_input: LineEdit = $VBoxContainer/LineEdit
 @onready var connect_button: Button = $VBoxContainer/Button
 
-@export var default_ip := "192.168.1.21"
+@export var default_ip := "127.0.0.1"
 
 signal connect_requested(ip: String)
 

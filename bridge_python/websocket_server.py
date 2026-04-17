@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-WebSocket Server - Sends telemetry data to Godot UI
-Broadcasts real-time KSP telemetry via WebSocket
+WebSocket Server - Diffuse la télémétrie kRPC aux clients Godot.
+
+Architecture : une seule tâche broadcast lit la télémétrie à la cadence
+configurée et l'envoie à tous les clients simultanément (au lieu d'une
+boucle par client).
 """
 
 import asyncio
@@ -11,92 +14,69 @@ import sys
 try:
     import websockets
 except ImportError:
-    print("✗ Module 'websockets' non installé. Installez: pip install websockets")
+    print("✗ Module 'websockets' requis: pip install websockets")
     sys.exit(1)
 
 
 class WebSocketServer:
-    """WebSocket server for broadcasting telemetry to Godot clients"""
-    
-    def __init__(self, krpc=None, host: str = "0.0.0.0", port: int = 8080, path: str = "/telemetry"):
-        """Initialize WebSocket server
-        
-        Args:
-            krpc: KRPCHandler instance for telemetry
-            host: Server host (0.0.0.0 = all interfaces)
-            port: Server port
-            path: WebSocket path (clients connect to ws://host:port/path)
-        """
+    """Serveur WebSocket broadcast-only pour la télémétrie."""
+
+    def __init__(self, krpc=None, host: str = "0.0.0.0", port: int = 8080, update_hz: int = 10):
         self.krpc = krpc
         self.host = host
         self.port = port
-        self.path = path
+        self.interval = 1.0 / max(1, update_hz)
         self.clients = set()
-        self.server = None
-    
-    async def handler(self, websocket):
-        """Handle WebSocket client connections"""
-        if not self.krpc:
-            await websocket.close()
-            return
-        
+
+    # ---- Gestion clients --------------------------------------------
+
+    async def _handler(self, websocket):
         self.clients.add(websocket)
+        addr = getattr(websocket, "remote_address", "?")
+        print(f"[WS] Client connecté: {addr}")
         try:
-            remote_addr = websocket.remote_address if hasattr(websocket, 'remote_address') else "unknown"
-        except:
-            remote_addr = "unknown"
-        print(f"[WS] Client connecté: {remote_addr}")
-        
-        try:
-            # Connection keeps alive, sending telemetry every 100ms
-            while True:
-                if self.krpc.connected:
-                    # Get telemetry and add ascending flag
-                    data = self.krpc.get_telemetry()
-                    data['ascending'] = data.get('vertical_speed', 0) > 0
-                    
-                    msg = json.dumps(data)
-                    await websocket.send(msg)
-                
-                await asyncio.sleep(0.1)  # 10 Hz update rate
-        
+            async for _ in websocket:  # on ignore les messages entrants
+                pass
         except websockets.ConnectionClosed:
-            print(f"[WS] Client déconnecté: {remote_addr}")
-        except Exception as e:
-            print(f"[WS] Erreur client {remote_addr}: {e}")
+            pass
         finally:
             self.clients.discard(websocket)
-    
-    async def run_server(self):
-        """Start the WebSocket server (async)"""
-        async with websockets.serve(self.handler, self.host, self.port):
-            print(f"[WS] Serveur écoute sur ws://{self.host}:{self.port}{self.path}")
-            await asyncio.Future()  # Run forever
-    
+            print(f"[WS] Client déconnecté: {addr}")
+
+    # ---- Broadcast ---------------------------------------------------
+
+    def _build_payload(self) -> dict:
+        if not self.krpc or not self.krpc.connected:
+            return {"connected": False}
+        data = self.krpc.get_telemetry()
+        data["connected"] = True
+        data["ascending"] = data.get("vertical_speed", 0) > 0
+        return data
+
+    async def _broadcast_loop(self):
+        while True:
+            if self.clients:
+                msg = json.dumps(self._build_payload())
+                dead = set()
+                for ws in self.clients:
+                    try:
+                        await ws.send(msg)
+                    except Exception:
+                        dead.add(ws)
+                self.clients -= dead
+            await asyncio.sleep(self.interval)
+
+    # ---- Lancement ---------------------------------------------------
+
+    async def _run(self):
+        async with websockets.serve(self._handler, self.host, self.port):
+            print(f"[WS] Écoute sur ws://{self.host}:{self.port}")
+            await self._broadcast_loop()
+
     def start(self):
-        """Start server in blocking mode
-        
-        Call this from main thread - will block
-        """
         try:
-            asyncio.run(self.run_server())
+            asyncio.run(self._run())
         except KeyboardInterrupt:
-            print("[WS] Serveur arrêté")
+            print("[WS] Arrêt")
         except Exception as e:
-            print(f"[WS] Erreur serveur: {e}")
-    
-    async def broadcast(self, data: dict):
-        """Broadcast data to all connected clients (advanced usage)"""
-        if not self.clients:
-            return
-        
-        msg = json.dumps(data)
-        disconnected = set()
-        
-        for websocket in self.clients:
-            try:
-                await websocket.send(msg)
-            except websockets.ConnectionClosed:
-                disconnected.add(websocket)
-        
-        self.clients -= disconnected
+            print(f"[WS] Erreur: {e}")
