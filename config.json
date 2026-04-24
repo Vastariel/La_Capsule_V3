@@ -27,7 +27,7 @@
       "use_remote": true,
 
       "leds_rouges": {
-        "brightness": 0.5,
+        "brightness": 0.2,
         "active_high": true,
         "pins": {
           "24": "STAGE_BOOSTERS",
@@ -38,7 +38,7 @@
       },
 
       "leds_vertes": {
-        "brightness": 0.5,
+        "brightness": 0.1,
         "active_high": true,
         "pins": {
           "18": "SAS",
@@ -53,14 +53,14 @@
       },
 
       "boutons": {
-        "20": { "type": "ag", "value": 0, "name": "ENGINE_START" },
-        "23": { "type": "ag", "value": 1, "name": "STAGE_BOOSTERS" },
-        "8":  { "type": "ag", "value": 2, "name": "STAGE_1" },
-        "4":  { "type": "ag", "value": 3, "name": "STAGE_2" },
-        "19": { "type": "ag", "value": 4, "name": "STAGE_3" },
-        "13": { "type": "ag", "value": 5, "name": "PARACHUTE" },
-        "6":  { "type": "ag", "value": 6, "name": "HEAT_SHIELD" },
-        "7":  { "type": "ag", "value": 9, "name": "FAIRING" },
+        "20": { "type": "ag", "value": 1, "name": "ENGINE_START" },
+        "23": { "type": "ag", "value": 2, "name": "STAGE_BOOSTERS" },
+        "8":  { "type": "ag", "value": 3, "name": "STAGE_1" },
+        "4":  { "type": "ag", "value": 4, "name": "STAGE_2" },
+        "19": { "type": "ag", "value": 5, "name": "STAGE_3" },
+        "13": { "type": "ag", "value": 6, "name": "PARACHUTE" },
+        "6":  { "type": "ag", "value": 7, "name": "HEAT_SHIELD" },
+        "7":  { "type": "ag", "value": 10, "name": "FAIRING" },
         "11": { "type": "gear_brakes", "name": "LANDING_GEAR_BRAKES" },
         "5":  { "type": "map_toggle", "name": "TOGGLE_MAP" }
       }
