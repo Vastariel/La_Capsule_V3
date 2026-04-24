@@ -41,7 +41,9 @@ class PicoHandler:
         self._ema: Optional[float] = None
         self._last_emitted: float = 0.0
 
-        self.connect()
+        # Pas de self.connect() ici : picod stocke son état dans un
+        # threading.local() — la connexion doit être faite depuis le thread
+        # qui fera ensuite les adc_read(). L'appelant (gpio_loop) s'en charge.
 
     # ---- Connexion ---------------------------------------------------
 
@@ -124,3 +126,22 @@ class PicoHandler:
             self._last_emitted = value
             return value
         return None
+
+    def sync_emit(self, value: Optional[float] = None) -> float:
+        """Aligne le tracking d'émission sur `value` (ou la valeur courante).
+
+        À appeler quand un consommateur pousse une valeur sans passer par
+        `get_throttle_if_changed()`, pour que celle-ci ne réémette que sur
+        un vrai changement ultérieur.
+        """
+        if value is None:
+            value = self.get_throttle()
+        self._last_emitted = value
+        return value
+
+    def reset_emit(self) -> None:
+        """Reset l'EMA et le tracking d'émission : le prochain appel à
+        `get_throttle_if_changed()` traitera la valeur courante comme neuve.
+        """
+        self._ema = None
+        self._last_emitted = 0.0

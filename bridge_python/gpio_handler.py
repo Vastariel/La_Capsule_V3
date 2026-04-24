@@ -23,6 +23,26 @@ def _coerce_int_keys(d: Dict) -> Dict:
     return {int(k): v for k, v in d.items()}
 
 
+def _parse_leviers(raw: Dict) -> (Dict[int, str], Dict[int, bool]):
+    """Accepte deux formes pour chaque levier :
+      - "22": "THROTTLE_CONTROL"                         (ancienne forme)
+      - "22": { "name": "THROTTLE_CONTROL", "inverted": true }
+
+    Retourne (names_by_pin, inverted_by_pin).
+    """
+    names: Dict[int, str] = {}
+    inverted: Dict[int, bool] = {}
+    for pin_str, value in raw.items():
+        pin = int(pin_str)
+        if isinstance(value, dict):
+            names[pin] = str(value.get("name", ""))
+            inverted[pin] = bool(value.get("inverted", False))
+        else:
+            names[pin] = str(value)
+            inverted[pin] = False
+    return names, inverted
+
+
 class GPIOHandler:
     """Gère les GPIO de la Raspberry Pi et les actions associées."""
 
@@ -50,7 +70,7 @@ class GPIOHandler:
         green_pins = vertes_raw.get("pins", {k: v for k, v in vertes_raw.items() if k.isdigit()})
         self.leds_vertes_cfg = _coerce_int_keys(green_pins)
 
-        self.leviers_cfg = _coerce_int_keys(config.get("leviers", {}))
+        self.leviers_cfg, self._lever_inverted = _parse_leviers(config.get("leviers", {}))
         self.boutons_cfg = _coerce_int_keys(config.get("boutons", {}))
 
         self.factory = None
@@ -67,6 +87,7 @@ class GPIOHandler:
         self._red_on: Dict[int, bool] = {}
         self._sas_on = False
         self._rcs_on = False
+        self._throttle_lever_prev: Optional[bool] = None
 
         self._connect_factory()
         if self.connected:
@@ -129,6 +150,17 @@ class GPIOHandler:
             f"{len(self.leds_green)} vertes (dim {self.green_brightness:.2f}), "
             f"{len(self.leviers)} leviers, {len(self.boutons)} boutons"
         )
+        # Trace d'orientation : permet de vérifier la correspondance entre la
+        # position physique ON voulue et is_pressed (câblage pull-up/GND).
+        for pin, name in self.leviers_cfg.items():
+            btn = self.leviers.get(pin)
+            if btn is None:
+                continue
+            inv = self._lever_inverted.get(pin, False)
+            print(
+                f"[GPIO] Levier {name} (pin {pin}) état initial : "
+                f"is_pressed={btn.is_pressed} inverted={inv} → ON={self._lever_is_on(pin)}"
+            )
 
     # ---- Callbacks event-driven --------------------------------------
 
@@ -137,16 +169,17 @@ class GPIOHandler:
             self._dispatch_button(pin, action)
         return _cb
 
-    def _make_lever_callback(self, pin: int, action: str, pressed: bool):
+    def _make_lever_callback(self, pin: int, action: str, pressed_raw: bool):
         def _cb():
-            print(f"[GPIO] Levier {action}: {'ON' if pressed else 'OFF'}")
+            inverted = self._lever_inverted.get(pin, False)
+            on = (not pressed_raw) if inverted else pressed_raw
+            print(f"[GPIO] Levier {action}: {'ON' if on else 'OFF'}")
             if action == "SAS" and self.krpc:
-                self.krpc.set_sas(pressed)
+                self.krpc.set_sas(on)
             elif action == "RCS" and self.krpc:
-                self.krpc.set_rcs(pressed)
-            elif action == "THROTTLE_CONTROL" and self.krpc:
-                if not pressed and self.krpc.throttle_state != 0.0:
-                    self.krpc.set_throttle(0.0)
+                self.krpc.set_rcs(on)
+            # THROTTLE_CONTROL : la boucle _update_throttle (20 Hz) détecte
+            # la transition via _throttle_lever_prev et pousse la bonne valeur.
         return _cb
 
     def _dispatch_button(self, pin: int, action: Dict) -> None:
@@ -190,24 +223,25 @@ class GPIOHandler:
         self._push_lever_states()
 
     def _push_lever_states(self) -> None:
-        """Aligne KSP sur la position actuelle des leviers (SAS/RCS/throttle)."""
+        """Aligne KSP sur la position actuelle des leviers (SAS/RCS/throttle).
+
+        N'accède pas au Pico : la lecture ADC est réservée au thread gpio_loop
+        (contrainte threading.local de picod). On reset _throttle_lever_prev
+        pour que le prochain tick de _update_throttle pousse la bonne valeur.
+        """
         if not self.krpc:
             return
         for pin, action in self.leviers_cfg.items():
-            lever = self.leviers.get(pin)
-            if lever is None:
+            if self.leviers.get(pin) is None:
                 continue
-            pressed = lever.is_pressed
+            on = self._lever_is_on(pin)
             if action == "SAS":
-                self.krpc.set_sas(pressed)
+                self.krpc.set_sas(on)
             elif action == "RCS":
-                self.krpc.set_rcs(pressed)
-            elif action == "THROTTLE_CONTROL" and not pressed:
+                self.krpc.set_rcs(on)
+            elif action == "THROTTLE_CONTROL" and not on:
                 self.krpc.set_throttle(0.0)
-        # Throttle : on force une lecture Pico même si non changée.
-        if self.pico and self._throttle_lever_active():
-            value = self.pico.get_throttle()
-            self.krpc.set_throttle(value)
+        self._throttle_lever_prev = None
 
     # ---- Boucle (throttle + LEDs vertes) ----------------------------
 
@@ -217,22 +251,48 @@ class GPIOHandler:
         self._update_throttle()
         self._update_green_leds()
 
+    def _lever_is_on(self, pin: int) -> bool:
+        """État logique du levier : applique l'inversion si configurée."""
+        lever = self.leviers.get(pin)
+        if lever is None:
+            return False
+        raw = lever.is_pressed
+        return (not raw) if self._lever_inverted.get(pin, False) else raw
+
     def _throttle_lever_active(self) -> bool:
         throttle_pin = next(
             (p for p, a in self.leviers_cfg.items() if a == "THROTTLE_CONTROL"), None
         )
         if throttle_pin is None:
             return True
-        lever = self.leviers.get(throttle_pin)
-        return lever is not None and lever.is_pressed
+        return self._lever_is_on(throttle_pin)
 
     def _update_throttle(self) -> None:
         if not self.pico or not self.krpc:
             return
-        if not self._throttle_lever_active():
+
+        active = self._throttle_lever_active()
+
+        # Levier OFF : on force 0 et on reset le tracking Pico pour que
+        # la prochaine transition OFF→ON reparte proprement.
+        if not active:
             if self.krpc.throttle_state != 0.0:
                 self.krpc.set_throttle(0.0)
+            if self._throttle_lever_prev is not False:
+                self.pico.reset_emit()
+                self._throttle_lever_prev = False
             return
+
+        # Transition OFF→ON (ou premier tick avec levier ON) : on pousse
+        # immédiatement la valeur courante du pot, sans attendre un mouvement.
+        if self._throttle_lever_prev is not True:
+            value = self.pico.get_throttle()
+            self.krpc.set_throttle(value)
+            self.pico.sync_emit(value)
+            self._throttle_lever_prev = True
+            return
+
+        # Régime établi : on ne pousse que sur changement au-delà du deadband.
         new_value = self.pico.get_throttle_if_changed()
         if new_value is not None:
             self.krpc.set_throttle(new_value)

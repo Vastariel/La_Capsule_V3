@@ -15,7 +15,6 @@ Architecture multi-thread :
 import json
 import sys
 import threading
-import time
 from pathlib import Path
 
 from krpc_handler import KRPCHandler
@@ -58,7 +57,13 @@ def telemetry_loop(krpc: KRPCHandler, hz: int, stop_event: threading.Event) -> N
 
 
 def gpio_loop(gpio: GPIOHandler, hz: int, stop_event: threading.Event) -> None:
-    """Rafraîchit throttle (lecture Pico) + LEDs à cadence fixe."""
+    """Rafraîchit throttle (lecture Pico) + LEDs à cadence fixe.
+
+    `picod` utilise des threading.local() : la connexion au Pico doit être
+    établie depuis ce thread pour que les adc_read() suivants fonctionnent.
+    """
+    if gpio.pico is not None and not gpio.pico.connected:
+        gpio.pico.connect()
     interval = 1.0 / max(1, hz)
     while not stop_event.is_set():
         try:
@@ -136,18 +141,9 @@ def main() -> None:
     print("Ctrl-C pour arrêter")
     print("=" * 60)
 
-    # ---- Boucle principale (monitoring léger) -----------------------
-    loop = 0
+    # ---- Attente jusqu'à Ctrl-C -------------------------------------
     try:
-        while True:
-            time.sleep(1.0)
-            loop += 1
-            if loop % 10 == 0:
-                print(
-                    f"[LOOP] {loop:6d}s "
-                    f"KRPC:{'✓' if krpc.connected else '✗'} "
-                    f"WS:{len(ws.clients)}"
-                )
+        stop_event.wait()
     except KeyboardInterrupt:
         print("\n[MAIN] Ctrl-C")
     finally:
