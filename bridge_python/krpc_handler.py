@@ -3,16 +3,31 @@
 KRPC Handler - Connexion et télémétrie Kerbal Space Program via kRPC.
 
 Gère la connexion (avec reconnexion périodique), la collecte de télémétrie
-via des streams kRPC (beaucoup plus rapide qu'un appel RPC par champ),
-les commandes (SAS, RCS, throttle, action groups, caméra) et le carburant
-par étage.
+via des streams kRPC (beaucoup plus rapide qu'un appel RPC par champ) et
+les commandes (SAS, RCS, throttle, action groups, caméra).
 """
 
 import threading
 import time
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, Optional
 
 import krpc
+
+
+# Cadence (Hz) à laquelle KSP recalcule chaque stream côté serveur.
+# Limiter ce taux libère du CPU dans KSP — c'est le levier principal pour
+# réduire la latence du jeu, indépendamment de la fréquence de lecture côté
+# Python (qui reste à update_hz, et lit la valeur cachée du stream).
+STREAM_RATES_HZ: Dict[str, float] = {
+    "altitude": 20.0,
+    "speed": 20.0,
+    "vertical_speed": 20.0,
+    "throttle": 20.0,
+    "g_force": 10.0,
+    "current_stage": 5.0,
+    "apoapsis": 5.0,
+    "periapsis": 5.0,
+}
 
 
 class KRPCHandler:
@@ -40,7 +55,6 @@ class KRPCHandler:
         self.control = None
         self.flight = None
         self.orbit = None
-        self.resources = None
         self.camera = None
         self.space_center = None
 
@@ -49,14 +63,10 @@ class KRPCHandler:
             "speed": 0.0,
             "vertical_speed": 0.0,
             "g_force": 0.0,
-            "temperature": 0.0,
             "apoapsis": 0.0,
             "periapsis": 0.0,
-            "apoapsis_time": 0.0,
-            "periapsis_time": 0.0,
             "current_stage": -1,
             "engines_active": False,
-            "stages": [],
         }
 
         self.sas_state = False
@@ -65,8 +75,6 @@ class KRPCHandler:
 
         self._lock = threading.RLock()
         self._streams: Dict[str, "krpc.stream.Stream"] = {}
-        self._stage_streams: Dict[int, Dict[str, "krpc.stream.Stream"]] = {}
-        self._stage_streams_for: int = -2
         self._vessel_id: Optional[int] = None
         self.on_vessel_changed: Optional[Callable[[], None]] = None
 
@@ -99,28 +107,37 @@ class KRPCHandler:
         self.control = self.vessel.control
         self.flight = self.vessel.flight(self.vessel.orbit.body.reference_frame)
         self.orbit = self.vessel.orbit
-        self.resources = self.vessel.resources
         self.camera = self.space_center.camera
         self._vessel_id = id(self.vessel)
         self._open_streams()
 
     def _open_streams(self) -> None:
-        """Ouvre des streams kRPC pour les champs lus en boucle."""
+        """Ouvre des streams kRPC pour les champs lus en boucle.
+
+        Chaque stream a sa cadence serveur configurée via STREAM_RATES_HZ :
+        KSP cesse de recalculer le stream à chaque frame et le limite au Hz
+        demandé, ce qui réduit fortement la charge serveur.
+        """
         c = self.connection
         try:
-            self._streams = {
+            streams = {
                 "altitude": c.add_stream(getattr, self.flight, "surface_altitude"),
                 "speed": c.add_stream(getattr, self.flight, "speed"),
                 "vertical_speed": c.add_stream(getattr, self.flight, "vertical_speed"),
                 "g_force": c.add_stream(getattr, self.flight, "g_force"),
-                "temperature": c.add_stream(getattr, self.flight, "static_air_temperature"),
                 "apoapsis": c.add_stream(getattr, self.orbit, "apoapsis_altitude"),
                 "periapsis": c.add_stream(getattr, self.orbit, "periapsis_altitude"),
-                "apoapsis_time": c.add_stream(getattr, self.orbit, "time_to_apoapsis"),
-                "periapsis_time": c.add_stream(getattr, self.orbit, "time_to_periapsis"),
                 "current_stage": c.add_stream(getattr, self.control, "current_stage"),
                 "throttle": c.add_stream(getattr, self.control, "throttle"),
             }
+            for name, stream in streams.items():
+                rate = STREAM_RATES_HZ.get(name)
+                if rate is not None:
+                    try:
+                        stream.rate = rate
+                    except Exception as e:
+                        print(f"[KRPC] stream.rate({name}={rate}): {e}")
+            self._streams = streams
             print(f"[KRPC] {len(self._streams)} streams ouverts")
         except Exception as e:
             print(f"[KRPC] Impossible d'ouvrir les streams: {e}")
@@ -133,45 +150,6 @@ class KRPCHandler:
             except Exception:
                 pass
         self._streams = {}
-        self._close_stage_streams()
-
-    def _close_stage_streams(self) -> None:
-        for streams in self._stage_streams.values():
-            for s in streams.values():
-                try:
-                    s.remove()
-                except Exception:
-                    pass
-        self._stage_streams = {}
-        self._stage_streams_for = -2
-
-    def _ensure_stage_streams(self, current: int, max_stages: int = 4) -> None:
-        """Ouvre des streams kRPC pour le carburant des `max_stages` derniers
-        étages. Ne fait rien si les streams sont déjà ouverts pour ce stage.
-
-        L'ouverture coûte quelques RPC (add_stream), mais la lecture ensuite
-        est purement locale — c'est ce qui débloque la latence des boutons.
-        """
-        if current == self._stage_streams_for:
-            return
-        self._close_stage_streams()
-        if current < 0 or self.connection is None:
-            return
-        self._stage_streams_for = current
-        c = self.connection
-        for stage_num in range(current, max(current - max_stages, -1), -1):
-            if stage_num < 0:
-                break
-            try:
-                res = self.vessel.resources_in_decouple_stage(
-                    stage=stage_num, cumulative=False
-                )
-                self._stage_streams[stage_num] = {
-                    "amount": c.add_stream(res.amount, "LiquidFuel"),
-                    "max": c.add_stream(res.max, "LiquidFuel"),
-                }
-            except Exception as e:
-                print(f"[KRPC] Stage stream {stage_num}: {e}")
 
     def _check_vessel_changed(self, new_stage: int) -> bool:
         """Détecte un retour au lancement / switch de vaisseau.
@@ -236,11 +214,8 @@ class KRPCHandler:
                     self.telemetry["speed"] = streams["speed"]()
                     self.telemetry["vertical_speed"] = streams["vertical_speed"]()
                     self.telemetry["g_force"] = streams["g_force"]()
-                    self.telemetry["temperature"] = streams["temperature"]()
                     self.telemetry["apoapsis"] = streams["apoapsis"]()
                     self.telemetry["periapsis"] = streams["periapsis"]()
-                    self.telemetry["apoapsis_time"] = streams["apoapsis_time"]()
-                    self.telemetry["periapsis_time"] = streams["periapsis_time"]()
                     new_stage = streams["current_stage"]()
                     self.telemetry["engines_active"] = streams["throttle"]() > 0.0
                 else:
@@ -249,61 +224,16 @@ class KRPCHandler:
                     self.telemetry["speed"] = self.flight.speed
                     self.telemetry["vertical_speed"] = self.flight.vertical_speed
                     self.telemetry["g_force"] = self.flight.g_force
-                    self.telemetry["temperature"] = self.flight.static_air_temperature
                     self.telemetry["apoapsis"] = self.orbit.apoapsis_altitude
                     self.telemetry["periapsis"] = self.orbit.periapsis_altitude
-                    self.telemetry["apoapsis_time"] = self.orbit.time_to_apoapsis
-                    self.telemetry["periapsis_time"] = self.orbit.time_to_periapsis
                     new_stage = self.control.current_stage
                     self.telemetry["engines_active"] = self.control.throttle > 0.0
                 self._check_vessel_changed(new_stage)
                 self.telemetry["current_stage"] = new_stage
-                self.telemetry["stages"] = self._get_stages_fuel_locked()
             except Exception as e:
                 print(f"[KRPC] Erreur télémétrie: {e}")
                 self.connected = False
                 self._close_streams()
-
-    def get_stages_fuel(self, max_stages: int = 4) -> List[Dict]:
-        with self._lock:
-            return self._get_stages_fuel_locked(max_stages)
-
-    def _get_stages_fuel_locked(self, max_stages: int = 4) -> List[Dict]:
-        """Carburant par étage (du plus récent au plus ancien).
-
-        Lit via des streams kRPC : zéro RPC par tick (lecture locale).
-        Les streams sont rebâtis uniquement quand `current_stage` change.
-        """
-        if not self.connected:
-            return []
-        current = self.telemetry.get("current_stage", -1)
-        if current < 0:
-            return []
-        try:
-            self._ensure_stage_streams(current, max_stages)
-            stages: List[Dict] = []
-            for stage_num in range(current, max(current - max_stages, -1), -1):
-                if stage_num < 0:
-                    break
-                ss = self._stage_streams.get(stage_num)
-                pct = 0.0
-                if ss is not None:
-                    try:
-                        amount = ss["amount"]()
-                        mx = ss["max"]()
-                        pct = (amount / mx * 100.0) if mx > 0 else 0.0
-                    except Exception:
-                        pct = 0.0
-                stages.append(
-                    {
-                        "stage": stage_num,
-                        "fuel_percent": pct,
-                        "attached": stage_num <= current,
-                    }
-                )
-            return stages
-        except Exception:
-            return []
 
     def get_telemetry(self) -> Dict:
         with self._lock:

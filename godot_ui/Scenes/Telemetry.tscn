@@ -212,6 +212,64 @@ layout_mode = 2
 texture = ExtResource("5_8fkpw")
 expand_mode = 5
 
+[node name="VSpeed" type="VBoxContainer" parent="Content/CenterContainer/Values"]
+layout_mode = 2
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/VSpeed"]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+theme_override_colors/font_color = Color(0.6255971, 0.6255971, 0.6255971, 1)
+text = "V-SPEED"
+
+[node name="VSpeedValue" type="Label" parent="Content/CenterContainer/Values/VSpeed"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("6_or2ii")
+theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
+theme_override_fonts/font = ExtResource("2_hhwjn")
+theme_override_font_sizes/font_size = 50
+text = "+000.0 m/s"
+horizontal_alignment = 2
+clip_text = true
+
+[node name="TextureRect" type="TextureRect" parent="Content/CenterContainer/Values/VSpeed"]
+modulate = Color(0.627451, 0.627451, 0.627451, 1)
+layout_mode = 2
+texture = ExtResource("5_8fkpw")
+expand_mode = 5
+
+[node name="GForce" type="VBoxContainer" parent="Content/CenterContainer/Values"]
+layout_mode = 2
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/GForce"]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+theme_override_colors/font_color = Color(0.6255971, 0.6255971, 0.6255971, 1)
+text = "G-FORCE"
+
+[node name="GForceValue" type="Label" parent="Content/CenterContainer/Values/GForce"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("6_or2ii")
+theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
+theme_override_fonts/font = ExtResource("2_hhwjn")
+theme_override_font_sizes/font_size = 50
+text = "0.00 g"
+horizontal_alignment = 2
+clip_text = true
+
+[node name="TextureRect" type="TextureRect" parent="Content/CenterContainer/Values/GForce"]
+modulate = Color(0.627451, 0.627451, 0.627451, 1)
+layout_mode = 2
+texture = ExtResource("5_8fkpw")
+expand_mode = 5
+
 [node name="MarginContainer6" type="MarginContainer" parent="Content"]
 layout_mode = 2
 size_flags_horizontal = 3

@@ -23,6 +23,8 @@ var speed_label: Label
 var apoapsis_label: Label
 var altitude_label: Label
 var periapsis_label: Label
+var vspeed_label: Label
+var gforce_label: Label
 var fuel_bars: Array = []
 var rocket: Node = null
 
@@ -44,6 +46,8 @@ func _cache_ui_nodes():
 	apoapsis_label = find_child("ApoapsisValue", true, false)
 	altitude_label = find_child("AltitudeValue", true, false)
 	periapsis_label = find_child("PeriapsisValue", true, false)
+	vspeed_label = find_child("VSpeedValue", true, false)
+	gforce_label = find_child("GForceValue", true, false)
 
 	var stage1 = find_child("FuelBar", true, false)
 	var stage2 = find_child("ProgressBar2", true, false)
@@ -129,6 +133,8 @@ func _process_message(text: String) -> void:
 	var altitude = data.get("altitude")
 	var apo = data.get("apoapsis")
 	var peri = data.get("periapsis")
+	var vspeed = data.get("vertical_speed")
+	var gforce = data.get("g_force")
 
 	if speed != null and speed_label:
 		speed_label.text = _format_speed(speed)
@@ -138,6 +144,10 @@ func _process_message(text: String) -> void:
 		apoapsis_label.text = _format_big_number(float(apo) - kerbin_radius_m)
 	if peri != null and periapsis_label:
 		periapsis_label.text = _format_big_number(float(peri) - kerbin_radius_m)
+	if vspeed != null and vspeed_label:
+		vspeed_label.text = "%+6.1f m/s" % float(vspeed)
+	if gforce != null and gforce_label:
+		gforce_label.text = "%4.2f g" % float(gforce)
 
 	var stages = data.get("stages", [])
 	if stages is Array:
