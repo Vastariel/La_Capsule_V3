@@ -65,6 +65,8 @@ class KRPCHandler:
 
         self._lock = threading.RLock()
         self._streams: Dict[str, "krpc.stream.Stream"] = {}
+        self._stage_streams: Dict[int, Dict[str, "krpc.stream.Stream"]] = {}
+        self._stage_streams_for: int = -2
         self._vessel_id: Optional[int] = None
         self.on_vessel_changed: Optional[Callable[[], None]] = None
 
@@ -131,6 +133,45 @@ class KRPCHandler:
             except Exception:
                 pass
         self._streams = {}
+        self._close_stage_streams()
+
+    def _close_stage_streams(self) -> None:
+        for streams in self._stage_streams.values():
+            for s in streams.values():
+                try:
+                    s.remove()
+                except Exception:
+                    pass
+        self._stage_streams = {}
+        self._stage_streams_for = -2
+
+    def _ensure_stage_streams(self, current: int, max_stages: int = 4) -> None:
+        """Ouvre des streams kRPC pour le carburant des `max_stages` derniers
+        étages. Ne fait rien si les streams sont déjà ouverts pour ce stage.
+
+        L'ouverture coûte quelques RPC (add_stream), mais la lecture ensuite
+        est purement locale — c'est ce qui débloque la latence des boutons.
+        """
+        if current == self._stage_streams_for:
+            return
+        self._close_stage_streams()
+        if current < 0 or self.connection is None:
+            return
+        self._stage_streams_for = current
+        c = self.connection
+        for stage_num in range(current, max(current - max_stages, -1), -1):
+            if stage_num < 0:
+                break
+            try:
+                res = self.vessel.resources_in_decouple_stage(
+                    stage=stage_num, cumulative=False
+                )
+                self._stage_streams[stage_num] = {
+                    "amount": c.add_stream(res.amount, "LiquidFuel"),
+                    "max": c.add_stream(res.max, "LiquidFuel"),
+                }
+            except Exception as e:
+                print(f"[KRPC] Stage stream {stage_num}: {e}")
 
     def _check_vessel_changed(self, new_stage: int) -> bool:
         """Détecte un retour au lancement / switch de vaisseau.
@@ -230,25 +271,29 @@ class KRPCHandler:
     def _get_stages_fuel_locked(self, max_stages: int = 4) -> List[Dict]:
         """Carburant par étage (du plus récent au plus ancien).
 
-        Chaque entrée: {stage, fuel_percent, attached}.
+        Lit via des streams kRPC : zéro RPC par tick (lecture locale).
+        Les streams sont rebâtis uniquement quand `current_stage` change.
         """
         if not self.connected:
             return []
+        current = self.telemetry.get("current_stage", -1)
+        if current < 0:
+            return []
         try:
-            current = self.control.current_stage
+            self._ensure_stage_streams(current, max_stages)
             stages: List[Dict] = []
-            for stage_num in range(current, current - max_stages, -1):
+            for stage_num in range(current, max(current - max_stages, -1), -1):
                 if stage_num < 0:
                     break
-                try:
-                    res = self.vessel.resources_in_decouple_stage(
-                        stage=stage_num, cumulative=False
-                    )
-                    liquid = res.amount("LiquidFuel")
-                    liquid_max = res.max("LiquidFuel")
-                    pct = (liquid / liquid_max * 100.0) if liquid_max > 0 else 0.0
-                except Exception:
-                    pct = 0.0
+                ss = self._stage_streams.get(stage_num)
+                pct = 0.0
+                if ss is not None:
+                    try:
+                        amount = ss["amount"]()
+                        mx = ss["max"]()
+                        pct = (amount / mx * 100.0) if mx > 0 else 0.0
+                    except Exception:
+                        pct = 0.0
                 stages.append(
                     {
                         "stage": stage_num,
