@@ -27,6 +27,8 @@ STREAM_RATES_HZ: Dict[str, float] = {
     "current_stage": 5.0,
     "apoapsis": 5.0,
     "periapsis": 5.0,
+    "time_to_apoapsis": 1.0,
+    "time_to_periapsis": 1.0,
 }
 
 
@@ -65,9 +67,13 @@ class KRPCHandler:
             "g_force": 0.0,
             "apoapsis": 0.0,
             "periapsis": 0.0,
+            "time_to_apoapsis": 0.0,
+            "time_to_periapsis": 0.0,
+            "heat_shield_temp": 0.0,
             "current_stage": -1,
             "engines_active": False,
         }
+        self._heat_counter = 0
 
         self.sas_state = False
         self.rcs_state = False
@@ -127,6 +133,8 @@ class KRPCHandler:
                 "g_force": c.add_stream(getattr, self.flight, "g_force"),
                 "apoapsis": c.add_stream(getattr, self.orbit, "apoapsis_altitude"),
                 "periapsis": c.add_stream(getattr, self.orbit, "periapsis_altitude"),
+                "time_to_apoapsis": c.add_stream(getattr, self.orbit, "time_to_apoapsis"),
+                "time_to_periapsis": c.add_stream(getattr, self.orbit, "time_to_periapsis"),
                 "current_stage": c.add_stream(getattr, self.control, "current_stage"),
                 "throttle": c.add_stream(getattr, self.control, "throttle"),
             }
@@ -216,6 +224,8 @@ class KRPCHandler:
                     self.telemetry["g_force"] = streams["g_force"]()
                     self.telemetry["apoapsis"] = streams["apoapsis"]()
                     self.telemetry["periapsis"] = streams["periapsis"]()
+                    self.telemetry["time_to_apoapsis"] = streams["time_to_apoapsis"]()
+                    self.telemetry["time_to_periapsis"] = streams["time_to_periapsis"]()
                     new_stage = streams["current_stage"]()
                     self.telemetry["engines_active"] = streams["throttle"]() > 0.0
                 else:
@@ -226,14 +236,26 @@ class KRPCHandler:
                     self.telemetry["g_force"] = self.flight.g_force
                     self.telemetry["apoapsis"] = self.orbit.apoapsis_altitude
                     self.telemetry["periapsis"] = self.orbit.periapsis_altitude
+                    self.telemetry["time_to_apoapsis"] = self.orbit.time_to_apoapsis
+                    self.telemetry["time_to_periapsis"] = self.orbit.time_to_periapsis
                     new_stage = self.control.current_stage
                     self.telemetry["engines_active"] = self.control.throttle > 0.0
+                self._heat_counter += 1
+                if self._heat_counter >= 20:
+                    self._heat_counter = 0
+                    self.telemetry["heat_shield_temp"] = self._poll_heat_shield_temp()
                 self._check_vessel_changed(new_stage)
                 self.telemetry["current_stage"] = new_stage
             except Exception as e:
                 print(f"[KRPC] Erreur télémétrie: {e}")
                 self.connected = False
                 self._close_streams()
+
+    def _poll_heat_shield_temp(self) -> float:
+        try:
+            return max(p.skin_temperature for p in self.vessel.parts.all)
+        except Exception:
+            return 0.0
 
     def get_telemetry(self) -> Dict:
         with self._lock:

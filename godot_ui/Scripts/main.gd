@@ -9,7 +9,6 @@ extends Node
 @export var auto_connect: bool = true
 @export var reconnect_delay: float = 2.0
 @export var fallback_delay: float = 5.0
-@export var kerbin_radius_m: float = 600000.0
 
 signal telemetry_updated(data)
 
@@ -23,8 +22,11 @@ var speed_label: Label
 var apoapsis_label: Label
 var altitude_label: Label
 var periapsis_label: Label
+var apo_time_label: Label
+var peri_time_label: Label
 var vspeed_label: Label
 var gforce_label: Label
+var heat_temp_label: Label
 var fuel_bars: Array = []
 var rocket: Node = null
 
@@ -46,8 +48,11 @@ func _cache_ui_nodes():
 	apoapsis_label = find_child("ApoapsisValue", true, false)
 	altitude_label = find_child("AltitudeValue", true, false)
 	periapsis_label = find_child("PeriapsisValue", true, false)
+	apo_time_label = find_child("ApoTimeValue", true, false)
+	peri_time_label = find_child("PeriTimeValue", true, false)
 	vspeed_label = find_child("VSpeedValue", true, false)
 	gforce_label = find_child("GForceValue", true, false)
+	heat_temp_label = find_child("HeatTempValue", true, false)
 
 	var stage1 = find_child("FuelBar", true, false)
 	var stage2 = find_child("ProgressBar2", true, false)
@@ -141,11 +146,22 @@ func _process_message(text: String) -> void:
 	if altitude != null and altitude_label:
 		altitude_label.text = _format_big_number(altitude)
 	if apo != null and apoapsis_label:
-		apoapsis_label.text = _format_big_number(float(apo) - kerbin_radius_m)
+		apoapsis_label.text = _format_big_number(float(apo))
 	if peri != null and periapsis_label:
-		periapsis_label.text = _format_big_number(float(peri) - kerbin_radius_m)
+		periapsis_label.text = _format_big_number(float(peri))
 	if vspeed != null and vspeed_label:
-		vspeed_label.text = "%+6.1f m/s" % float(vspeed)
+		vspeed_label.text = "▲" if float(vspeed) > 0.0 else "▼"
+
+	var apo_time = data.get("time_to_apoapsis")
+	var peri_time = data.get("time_to_periapsis")
+	if apo_time != null and apo_time_label:
+		apo_time_label.text = _format_time(float(apo_time))
+	if peri_time != null and peri_time_label:
+		peri_time_label.text = _format_time(float(peri_time))
+
+	var heat_temp = data.get("heat_shield_temp")
+	if heat_temp != null and heat_temp_label:
+		heat_temp_label.text = "%d" % int(float(heat_temp))
 	if gforce != null and gforce_label:
 		gforce_label.text = "%4.2f g" % float(gforce)
 
@@ -175,7 +191,20 @@ func _update_stages(stages: Array):
 
 
 func _format_speed(s) -> String:
-	return "%06.3f km/s" % float(s)
+	return "%.3f" % (float(s) / 1000.0)
+
+
+func _format_time(t: float) -> String:
+	if t < 0.0:
+		return "--:--"
+	var sec := int(t)
+	var m := sec / 60
+	sec = sec % 60
+	if m >= 60:
+		var h := m / 60
+		m = m % 60
+		return "%d:%02d:%02d" % [h, m, sec]
+	return "%02d:%02d" % [m, sec]
 
 
 func _format_big_number(n) -> String:
