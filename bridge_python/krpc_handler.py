@@ -114,8 +114,8 @@ class KRPCHandler:
                 "vertical_speed": c.add_stream(getattr, self.flight, "vertical_speed"),
                 "g_force": c.add_stream(getattr, self.flight, "g_force"),
                 "temperature": c.add_stream(getattr, self.flight, "static_air_temperature"),
-                "apoapsis": c.add_stream(getattr, self.orbit, "apoapsis"),
-                "periapsis": c.add_stream(getattr, self.orbit, "periapsis"),
+                "apoapsis": c.add_stream(getattr, self.orbit, "apoapsis_altitude"),
+                "periapsis": c.add_stream(getattr, self.orbit, "periapsis_altitude"),
                 "apoapsis_time": c.add_stream(getattr, self.orbit, "time_to_apoapsis"),
                 "periapsis_time": c.add_stream(getattr, self.orbit, "time_to_periapsis"),
                 "current_stage": c.add_stream(getattr, self.control, "current_stage"),
@@ -250,8 +250,8 @@ class KRPCHandler:
                     self.telemetry["vertical_speed"] = self.flight.vertical_speed
                     self.telemetry["g_force"] = self.flight.g_force
                     self.telemetry["temperature"] = self.flight.static_air_temperature
-                    self.telemetry["apoapsis"] = self.orbit.apoapsis
-                    self.telemetry["periapsis"] = self.orbit.periapsis
+                    self.telemetry["apoapsis"] = self.orbit.apoapsis_altitude
+                    self.telemetry["periapsis"] = self.orbit.periapsis_altitude
                     self.telemetry["apoapsis_time"] = self.orbit.time_to_apoapsis
                     self.telemetry["periapsis_time"] = self.orbit.time_to_periapsis
                     new_stage = self.control.current_stage
