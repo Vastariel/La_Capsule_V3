@@ -69,9 +69,8 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(750, 0)
 layout_mode = 2
 size_flags_vertical = 3
-theme = ExtResource("6_or2ii")
 theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 75
+theme_override_font_sizes/font_size = 100
 text = "0.000"
 horizontal_alignment = 1
 clip_text = true
@@ -90,6 +89,7 @@ metadata/_edit_lock_ = true
 layout_mode = 2
 
 [node name="Surrounding" type="TextureRect" parent="Content/CenterContainer" unique_id=1083765300]
+visible = false
 layout_mode = 2
 texture = ExtResource("3_or2ii")
 stretch_mode = 2
@@ -97,6 +97,7 @@ script = ExtResource("4_hhwjn")
 metadata/_edit_use_anchors_ = true
 
 [node name="Inner Circle" type="HBoxContainer" parent="Content/CenterContainer" unique_id=1741606145]
+visible = false
 layout_mode = 2
 size_flags_vertical = 4
 alignment = 1
@@ -127,21 +128,21 @@ size_flags_vertical = 4
 theme_override_constants/separation = 80
 alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Content/CenterContainer/Values" unique_id=48085732]
+[node name="Apostre" type="HBoxContainer" parent="Content/CenterContainer/Values" unique_id=48085732]
 layout_mode = 2
 
-[node name="Apoastre" type="VBoxContainer" parent="Content/CenterContainer/Values/HBoxContainer" unique_id=883821282]
+[node name="Apoastre" type="VBoxContainer" parent="Content/CenterContainer/Values/Apostre" unique_id=883821282]
 layout_mode = 2
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/HBoxContainer/Apoastre" unique_id=1957617346]
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/Apostre/Apoastre" unique_id=1957617346]
 layout_mode = 2
 theme = ExtResource("6_or2ii")
 theme_override_colors/font_color = Color(0.6255971, 0.6255971, 0.6255971, 1)
 text = "APOASTRE"
 
-[node name="ApoapsisValue" type="Label" parent="Content/CenterContainer/Values/HBoxContainer/Apoastre" unique_id=1522828896]
+[node name="ApoapsisValue" type="Label" parent="Content/CenterContainer/Values/Apostre/Apoastre" unique_id=1522828896]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
@@ -153,14 +154,14 @@ text = "000.000.000"
 horizontal_alignment = 2
 clip_text = true
 
-[node name="TextureRect" type="TextureRect" parent="Content/CenterContainer/Values/HBoxContainer/Apoastre" unique_id=1379832567]
+[node name="TextureRect" type="TextureRect" parent="Content/CenterContainer/Values/Apostre/Apoastre" unique_id=1379832567]
 modulate = Color(0.627451, 0.627451, 0.627451, 1)
 layout_mode = 2
 theme = SubResource("Theme_d7sbj")
 texture = ExtResource("5_8fkpw")
 expand_mode = 5
 
-[node name="ApoTimeValue" type="Label" parent="Content/CenterContainer/Values/HBoxContainer" unique_id=915977789]
+[node name="ApoTimeValue" type="Label" parent="Content/CenterContainer/Values/Apostre" unique_id=915977789]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
@@ -171,32 +172,6 @@ theme_override_font_sizes/font_size = 35
 text = "--:--"
 horizontal_alignment = 2
 clip_text = true
-
-[node name="Altitude" type="VBoxContainer" parent="Content/CenterContainer/Values" unique_id=1138711806]
-layout_mode = 2
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/Altitude" unique_id=512635235]
-layout_mode = 2
-theme = ExtResource("6_or2ii")
-text = "ALTITUDE"
-
-[node name="AltitudeValue" type="Label" parent="Content/CenterContainer/Values/Altitude" unique_id=291114035]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-size_flags_horizontal = 8
-theme = ExtResource("6_or2ii")
-theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 50
-text = "000.000.000"
-horizontal_alignment = 2
-clip_text = true
-
-[node name="TextureRect3" type="TextureRect" parent="Content/CenterContainer/Values/Altitude" unique_id=910526333]
-layout_mode = 2
-texture = ExtResource("5_8fkpw")
-expand_mode = 5
 
 [node name="Périastre" type="HBoxContainer" parent="Content/CenterContainer/Values" unique_id=1361096831]
 layout_mode = 2
@@ -242,6 +217,32 @@ text = "--:--"
 horizontal_alignment = 2
 clip_text = true
 
+[node name="Altitude" type="VBoxContainer" parent="Content/CenterContainer/Values" unique_id=1138711806]
+layout_mode = 2
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/Altitude" unique_id=512635235]
+layout_mode = 2
+theme = ExtResource("6_or2ii")
+text = "ALTITUDE"
+
+[node name="AltitudeValue" type="Label" parent="Content/CenterContainer/Values/Altitude" unique_id=291114035]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("6_or2ii")
+theme_override_fonts/font = ExtResource("2_hhwjn")
+theme_override_font_sizes/font_size = 100
+text = "000.000.000"
+horizontal_alignment = 2
+clip_text = true
+
+[node name="TextureRect3" type="TextureRect" parent="Content/CenterContainer/Values/Altitude" unique_id=910526333]
+layout_mode = 2
+texture = ExtResource("5_8fkpw")
+expand_mode = 5
+
 [node name="VSpeed" type="VBoxContainer" parent="Content/CenterContainer/Values" unique_id=924422782]
 layout_mode = 2
 size_flags_vertical = 4
@@ -257,7 +258,6 @@ text = "V-SPEED"
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
-theme = ExtResource("6_or2ii")
 theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
 theme_override_font_sizes/font_size = 80
 text = "▲"
@@ -316,6 +316,7 @@ size_flags_vertical = 3
 metadata/_edit_lock_ = true
 
 [node name="Bottom" type="HBoxContainer" parent="Content" unique_id=203269681]
+visible = false
 layout_mode = 2
 theme_override_constants/separation = 25
 
