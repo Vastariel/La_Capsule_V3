@@ -1,6 +1,7 @@
 [gd_resource type="Theme" format=3 uid="uid://bc5jcq4pvhw1n"]
 
 [ext_resource type="FontFile" uid="uid://1y7irbroxvxj" path="res://Fonts/AcuminVariableConcept.otf" id="1_0inak"]
+[ext_resource type="FontFile" uid="uid://cvx4mvooryln0" path="res://Fonts/digital-7 (mono).ttf" id="2_d7mon"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0inak"]
 
@@ -45,6 +46,14 @@ Button/colors/font_hover_pressed_color = Color(0.0392157, 0.0588235, 0.109804, 1
 Button/colors/font_pressed_color = Color(0.0392157, 0.0588235, 0.109804, 1)
 Button/styles/normal = SubResource("StyleBoxEmpty_0inak")
 Button/styles/pressed = SubResource("StyleBoxFlat_nici0")
+DigitalLarge/font_sizes/font_size = 100
+DigitalLarge/fonts/font = ExtResource("2_d7mon")
+DigitalMedium/colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
+DigitalMedium/font_sizes/font_size = 50
+DigitalMedium/fonts/font = ExtResource("2_d7mon")
+DigitalSmall/colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
+DigitalSmall/font_sizes/font_size = 35
+DigitalSmall/fonts/font = ExtResource("1_0inak")
 Label/colors/font_color = Color(1, 1, 1, 1)
 Label/colors/font_outline_color = Color(0, 0, 0, 1)
 Label/colors/font_shadow_color = Color(0, 0, 0, 0)
@@ -59,3 +68,6 @@ Label/styles/focus = SubResource("StyleBoxFlat_vvv2u")
 Label/styles/normal = SubResource("StyleBoxEmpty_p7e3m")
 ProgressBar/styles/background = SubResource("StyleBoxFlat_p7e3m")
 ProgressBar/styles/fill = SubResource("StyleBoxFlat_0inak")
+SubHeader/colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
+VSpeedDisplay/colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
+VSpeedDisplay/font_sizes/font_size = 80

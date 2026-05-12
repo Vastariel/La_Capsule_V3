@@ -150,7 +150,7 @@ func _process_message(text: String) -> void:
 	if peri != null and periapsis_label:
 		periapsis_label.text = _format_big_number(float(peri))
 	if vspeed != null and vspeed_label:
-		vspeed_label.text = "▲" if float(vspeed) > 0.0 else "▼"
+		vspeed_label.text = "+" if float(vspeed) > 0.0 else "-"
 
 	var apo_time = data.get("time_to_apoapsis")
 	var peri_time = data.get("time_to_periapsis")
@@ -161,9 +161,9 @@ func _process_message(text: String) -> void:
 
 	var heat_temp = data.get("heat_shield_temp")
 	if heat_temp != null and heat_temp_label:
-		heat_temp_label.text = "%d" % int(float(heat_temp))
+		heat_temp_label.text = "%d" % int(float(heat_temp) - 273.15)
 	if gforce != null and gforce_label:
-		gforce_label.text = "%4.2f g" % float(gforce)
+		gforce_label.text = "%.2f" % float(gforce)
 
 	var stages = data.get("stages", [])
 	if stages is Array:
@@ -195,16 +195,17 @@ func _format_speed(s) -> String:
 
 
 func _format_time(t: float) -> String:
-	if t < 0.0:
+	if is_nan(t) or is_inf(t) or abs(t) > 86400.0:
 		return "--:--"
-	var sec := int(t)
+	var prefix := "-" if t < 0.0 else ""
+	var sec := int(abs(t))
 	var m := sec / 60
 	sec = sec % 60
 	if m >= 60:
 		var h := m / 60
 		m = m % 60
-		return "%d:%02d:%02d" % [h, m, sec]
-	return "%02d:%02d" % [m, sec]
+		return prefix + "%d:%02d:%02d" % [h, m, sec]
+	return prefix + "%02d:%02d" % [m, sec]
 
 
 func _format_big_number(n) -> String:

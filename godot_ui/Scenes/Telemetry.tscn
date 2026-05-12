@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://dw0y8cwqnon53"]
 
 [ext_resource type="Texture2D" uid="uid://baoerg0fxq1ai" path="res://Assets/inner_circle.png" id="2_b4d12"]
-[ext_resource type="FontFile" uid="uid://cvx4mvooryln0" path="res://Fonts/digital-7 (mono).ttf" id="2_hhwjn"]
 [ext_resource type="Texture2D" uid="uid://chjw3qrpnoory" path="res://Assets/outer-circle.png" id="3_or2ii"]
 [ext_resource type="Texture2D" uid="uid://cjuvdtyvi0dno" path="res://Assets/stage_container.png" id="4_1l3ks"]
 [ext_resource type="Script" uid="uid://ba7yvyfe5rayd" path="res://Scripts/surrounding.gd" id="4_hhwjn"]
@@ -10,7 +9,19 @@
 [ext_resource type="Theme" uid="uid://bc5jcq4pvhw1n" path="res://Assets/text-theme.tres" id="6_or2ii"]
 [ext_resource type="PackedScene" uid="uid://d1a3mg4gc0axk" path="res://Scenes/rocket.tscn" id="9_wlw6n"]
 
+[sub_resource type="Theme" id="Theme_8fkpw"]
+
+[sub_resource type="Theme" id="Theme_wlw6n"]
+
+[sub_resource type="Theme" id="Theme_hhwjn"]
+
+[sub_resource type="Theme" id="Theme_ik24p"]
+
+[sub_resource type="Theme" id="Theme_slr22"]
+
 [sub_resource type="Theme" id="Theme_d7sbj"]
+
+[sub_resource type="Theme" id="Theme_kn2m6"]
 
 [sub_resource type="FontVariation" id="FontVariation_1l3ks"]
 
@@ -39,6 +50,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("6_or2ii")
 theme_override_constants/separation = 0
 
 [node name="MarginContainer4" type="MarginContainer" parent="Content" unique_id=670846661]
@@ -54,23 +66,23 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Content/Speed" unique_id=1343922159]
+[node name="Vitesse" type="VBoxContainer" parent="Content/Speed" unique_id=1343922159]
 layout_mode = 2
 
-[node name="Vitesse" type="Label" parent="Content/Speed/VBoxContainer" unique_id=339179170]
+[node name="Vitesse" type="Label" parent="Content/Speed/Vitesse" unique_id=339179170]
 layout_mode = 2
 size_flags_vertical = 3
-theme = ExtResource("6_or2ii")
+theme = SubResource("Theme_8fkpw")
 theme_override_font_sizes/font_size = 75
 text = "VITESSE km/s"
 horizontal_alignment = 1
 
-[node name="SpeedValue" type="Label" parent="Content/Speed/VBoxContainer" unique_id=1987819914]
+[node name="SpeedValue" type="Label" parent="Content/Speed/Vitesse" unique_id=1987819914]
 custom_minimum_size = Vector2(750, 0)
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 100
+theme = SubResource("Theme_wlw6n")
+theme_type_variation = &"DigitalLarge"
 text = "0.000"
 horizontal_alignment = 1
 clip_text = true
@@ -78,6 +90,30 @@ clip_text = true
 [node name="MarginContainer2" type="MarginContainer" parent="Content/Speed" unique_id=666712253]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="Altitude" type="VBoxContainer" parent="Content" unique_id=1138711806]
+layout_mode = 2
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="Content/Altitude" unique_id=512635235]
+layout_mode = 2
+text = "ALTITUDE"
+
+[node name="AltitudeValue" type="Label" parent="Content/Altitude" unique_id=291114035]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+theme = SubResource("Theme_hhwjn")
+theme_type_variation = &"GraphFrameTitleLabel"
+text = "000.000.000"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="TextureRect3" type="TextureRect" parent="Content/Altitude" unique_id=910526333]
+layout_mode = 2
+texture = ExtResource("5_8fkpw")
+expand_mode = 5
+stretch_mode = 3
 
 [node name="MarginContainer5" type="MarginContainer" parent="Content" unique_id=1103810789]
 layout_mode = 2
@@ -138,18 +174,16 @@ alignment = 1
 
 [node name="Label" type="Label" parent="Content/CenterContainer/Values/Apostre/Apoastre" unique_id=1957617346]
 layout_mode = 2
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.6255971, 0.6255971, 0.6255971, 1)
+theme = SubResource("Theme_ik24p")
+theme_type_variation = &"SubHeader"
 text = "APOASTRE"
 
 [node name="ApoapsisValue" type="Label" parent="Content/CenterContainer/Values/Apostre/Apoastre" unique_id=1522828896]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
-theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 50
+theme = SubResource("Theme_slr22")
+theme_type_variation = &"DigitalMedium"
 text = "000.000.000"
 horizontal_alignment = 2
 clip_text = true
@@ -165,10 +199,7 @@ expand_mode = 5
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
-theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 35
+theme_type_variation = &"DigitalSmall"
 text = "--:--"
 horizontal_alignment = 2
 clip_text = true
@@ -183,18 +214,16 @@ alignment = 1
 
 [node name="Label" type="Label" parent="Content/CenterContainer/Values/Périastre/Périastre" unique_id=1512928876]
 layout_mode = 2
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
+theme = SubResource("Theme_ik24p")
+theme_type_variation = &"SubHeader"
 text = "PERIASTRE"
 
 [node name="PeriapsisValue" type="Label" parent="Content/CenterContainer/Values/Périastre/Périastre" unique_id=1355302437]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
-theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 50
+theme = SubResource("Theme_slr22")
+theme_type_variation = &"DigitalMedium"
 text = "000.000.000"
 horizontal_alignment = 2
 clip_text = true
@@ -209,111 +238,81 @@ expand_mode = 5
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
-theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 35
+theme = SubResource("Theme_kn2m6")
+theme_type_variation = &"DigitalSmall"
 text = "--:--"
 horizontal_alignment = 2
 clip_text = true
 
-[node name="Altitude" type="VBoxContainer" parent="Content/CenterContainer/Values" unique_id=1138711806]
+[node name="Données" type="HBoxContainer" parent="Content/CenterContainer/Values" unique_id=320422714]
+layout_mode = 2
+
+[node name="VSpeed" type="VBoxContainer" parent="Content/CenterContainer/Values/Données" unique_id=924422782]
 layout_mode = 2
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/Altitude" unique_id=512635235]
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/Données/VSpeed" unique_id=1764616650]
 layout_mode = 2
-theme = ExtResource("6_or2ii")
-text = "ALTITUDE"
-
-[node name="AltitudeValue" type="Label" parent="Content/CenterContainer/Values/Altitude" unique_id=291114035]
-custom_minimum_size = Vector2(500, 0)
-layout_mode = 2
-size_flags_horizontal = 8
-theme = ExtResource("6_or2ii")
-theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 100
-text = "000.000.000"
-horizontal_alignment = 2
-clip_text = true
-
-[node name="TextureRect3" type="TextureRect" parent="Content/CenterContainer/Values/Altitude" unique_id=910526333]
-layout_mode = 2
-texture = ExtResource("5_8fkpw")
-expand_mode = 5
-
-[node name="VSpeed" type="VBoxContainer" parent="Content/CenterContainer/Values" unique_id=924422782]
-layout_mode = 2
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/VSpeed" unique_id=1764616650]
-layout_mode = 2
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.6255971, 0.6255971, 0.6255971, 1)
+theme = SubResource("Theme_ik24p")
+theme_type_variation = &"SubHeader"
 text = "V-SPEED"
 
-[node name="VSpeedValue" type="Label" parent="Content/CenterContainer/Values/VSpeed" unique_id=459558258]
+[node name="VSpeedValue" type="Label" parent="Content/CenterContainer/Values/Données/VSpeed" unique_id=459558258]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
-theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
-theme_override_font_sizes/font_size = 80
-text = "▲"
-horizontal_alignment = 2
+theme = SubResource("Theme_slr22")
+theme_type_variation = &"VSpeedDisplay"
+text = "+"
+horizontal_alignment = 1
 
-[node name="GForce" type="VBoxContainer" parent="Content/CenterContainer/Values" unique_id=674716453]
+[node name="GForce" type="VBoxContainer" parent="Content/CenterContainer/Values/Données" unique_id=674716453]
 layout_mode = 2
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/GForce" unique_id=1024807319]
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/Données/GForce" unique_id=1024807319]
 layout_mode = 2
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.6255971, 0.6255971, 0.6255971, 1)
+theme = SubResource("Theme_ik24p")
+theme_type_variation = &"SubHeader"
 text = "G-FORCE"
 
-[node name="GForceValue" type="Label" parent="Content/CenterContainer/Values/GForce" unique_id=815667601]
+[node name="GForceValue" type="Label" parent="Content/CenterContainer/Values/Données/GForce" unique_id=815667601]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
-theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 50
-text = "0.00 g"
-horizontal_alignment = 2
+theme = SubResource("Theme_slr22")
+theme_type_variation = &"DigitalMedium"
+text = "0.00"
+horizontal_alignment = 1
 clip_text = true
 
-[node name="BoucherThermique" type="VBoxContainer" parent="Content/CenterContainer/Values" unique_id=353841719]
+[node name="BoucherThermique" type="VBoxContainer" parent="Content/CenterContainer/Values/Données" unique_id=353841719]
 layout_mode = 2
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/BoucherThermique" unique_id=1772054444]
+[node name="Label" type="Label" parent="Content/CenterContainer/Values/Données/BoucherThermique" unique_id=1772054444]
 layout_mode = 2
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.6255971, 0.6255971, 0.6255971, 1)
-text = "TEMPERATURE BOUCLIER"
+theme = SubResource("Theme_ik24p")
+theme_type_variation = &"SubHeader"
+text = "BOUCLIER (°C)"
 
-[node name="HeatTempValue" type="Label" parent="Content/CenterContainer/Values/BoucherThermique" unique_id=1855903477]
+[node name="HeatTempValue" type="Label" parent="Content/CenterContainer/Values/Données/BoucherThermique" unique_id=1855903477]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 8
-theme = ExtResource("6_or2ii")
-theme_override_colors/font_color = Color(0.627451, 0.627451, 0.627451, 1)
-theme_override_fonts/font = ExtResource("2_hhwjn")
-theme_override_font_sizes/font_size = 50
+theme = SubResource("Theme_slr22")
+theme_type_variation = &"DigitalMedium"
 text = "0000"
-horizontal_alignment = 2
+horizontal_alignment = 1
 clip_text = true
 
 [node name="MarginContainer6" type="MarginContainer" parent="Content" unique_id=531343993]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-metadata/_edit_lock_ = true
 
 [node name="Bottom" type="HBoxContainer" parent="Content" unique_id=203269681]
 visible = false
@@ -341,7 +340,6 @@ size_flags_horizontal = 3
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_stretch_ratio = 0.0
-theme = ExtResource("6_or2ii")
 theme_override_fonts/font = SubResource("FontVariation_1l3ks")
 text = "Étages"
 horizontal_alignment = 3
@@ -399,7 +397,6 @@ offset_right = 1.0
 offset_bottom = -215.0
 grow_horizontal = 0
 grow_vertical = 0
-theme = ExtResource("6_or2ii")
 theme_override_font_sizes/font_size = 13
 text = "Boost"
 horizontal_alignment = 1
@@ -418,7 +415,6 @@ offset_right = 28.0
 offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 0
-theme = ExtResource("6_or2ii")
 step = 0.5
 value = 100.0
 fill_mode = 3
@@ -442,7 +438,6 @@ offset_right = 1.0
 offset_bottom = -217.0
 grow_horizontal = 0
 grow_vertical = 0
-theme = ExtResource("6_or2ii")
 theme_override_font_sizes/font_size = 16
 text = "3"
 horizontal_alignment = 1
@@ -461,7 +456,6 @@ offset_right = 28.0
 offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 0
-theme = ExtResource("6_or2ii")
 step = 0.5
 value = 100.0
 fill_mode = 3
@@ -485,7 +479,6 @@ offset_right = 1.0
 offset_bottom = -217.0
 grow_horizontal = 0
 grow_vertical = 0
-theme = ExtResource("6_or2ii")
 theme_override_font_sizes/font_size = 16
 text = "2"
 horizontal_alignment = 1
@@ -504,7 +497,6 @@ offset_right = 28.0
 offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 0
-theme = ExtResource("6_or2ii")
 step = 0.5
 value = 100.0
 fill_mode = 3
@@ -528,7 +520,6 @@ offset_right = 1.0
 offset_bottom = -217.0
 grow_horizontal = 0
 grow_vertical = 0
-theme = ExtResource("6_or2ii")
 theme_override_font_sizes/font_size = 16
 text = "1"
 horizontal_alignment = 1
@@ -547,7 +538,6 @@ offset_right = 28.0
 offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 0
-theme = ExtResource("6_or2ii")
 step = 0.5
 value = 100.0
 fill_mode = 3
@@ -561,6 +551,7 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="MarginContainer3" type="MarginContainer" parent="Content" unique_id=378943249]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
