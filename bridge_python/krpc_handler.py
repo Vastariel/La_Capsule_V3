@@ -7,6 +7,7 @@ via des streams kRPC (beaucoup plus rapide qu'un appel RPC par champ) et
 les commandes (SAS, RCS, throttle, action groups, caméra).
 """
 
+import concurrent.futures
 import threading
 import time
 from typing import Callable, Dict, Optional
@@ -83,6 +84,9 @@ class KRPCHandler:
         self._streams: Dict[str, "krpc.stream.Stream"] = {}
         self._vessel_id: Optional[int] = None
         self.on_vessel_changed: Optional[Callable[[], None]] = None
+        self._executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="heat_poll"
+        )
 
     # ---- Connexion ---------------------------------------------------
 
@@ -248,7 +252,7 @@ class KRPCHandler:
             self._heat_counter += 1
             if self._heat_counter >= 20:
                 self._heat_counter = 0
-                new_vals["heat_shield_temp"] = self._poll_heat_shield_temp()
+                self._executor.submit(self._async_update_heat)
 
             # Lock court : écriture atomique du dict partagé.
             with self._lock:
@@ -261,6 +265,11 @@ class KRPCHandler:
             with self._lock:
                 self.connected = False
                 self._close_streams()
+
+    def _async_update_heat(self) -> None:
+        temp = self._poll_heat_shield_temp()
+        with self._lock:
+            self.telemetry["heat_shield_temp"] = temp
 
     def _poll_heat_shield_temp(self) -> float:
         try:
@@ -275,69 +284,63 @@ class KRPCHandler:
     # ---- Commandes ---------------------------------------------------
 
     def set_throttle(self, value: float) -> None:
-        with self._lock:
-            if not self.connected:
-                return
-            try:
-                v = max(0.0, min(1.0, value))
-                self.control.throttle = v
-                self.throttle_state = v
-            except Exception as e:
-                print(f"[KRPC] Erreur throttle: {e}")
+        if not self.connected:
+            return
+        try:
+            v = max(0.0, min(1.0, value))
+            self.control.throttle = v
+            self.throttle_state = v
+        except Exception as e:
+            print(f"[KRPC] Erreur throttle: {e}")
 
     def set_sas(self, enabled: bool) -> None:
-        with self._lock:
-            if not self.connected:
-                return
-            try:
-                self.control.sas = enabled
-                self.sas_state = enabled
-            except Exception as e:
-                print(f"[KRPC] Erreur SAS: {e}")
+        if not self.connected:
+            return
+        try:
+            self.control.sas = enabled
+            self.sas_state = enabled
+        except Exception as e:
+            print(f"[KRPC] Erreur SAS: {e}")
 
     def set_rcs(self, enabled: bool) -> None:
-        with self._lock:
-            if not self.connected:
-                return
-            try:
-                self.control.rcs = enabled
-                self.rcs_state = enabled
-            except Exception as e:
-                print(f"[KRPC] Erreur RCS: {e}")
+        if not self.connected:
+            return
+        try:
+            self.control.rcs = enabled
+            self.rcs_state = enabled
+        except Exception as e:
+            print(f"[KRPC] Erreur RCS: {e}")
 
     def trigger_action_group(self, group: int) -> None:
-        with self._lock:
-            if not self.connected:
-                return
-            try:
-                self.control.toggle_action_group(group)
-                print(f"[KSP] AG {group} déclenché")
-            except Exception as e:
-                print(f"[KRPC] Erreur AG {group}: {e}")
+        if not self.connected:
+            return
+        try:
+            self.control.toggle_action_group(group)
+            print(f"[KSP] AG {group} déclenché")
+        except Exception as e:
+            print(f"[KRPC] Erreur AG {group}: {e}")
 
     def toggle_gear_and_brakes(self) -> None:
-        with self._lock:
-            if not self.connected:
-                return
-            try:
-                new_state = not self.control.gear
-                self.control.gear = new_state
-                self.control.brakes = new_state
-                print(f"[KSP] Train/Freins: {'ON' if new_state else 'OFF'}")
-            except Exception as e:
-                print(f"[KRPC] Erreur gear/brakes: {e}")
+        if not self.connected:
+            return
+        try:
+            new_state = not self.control.gear
+            self.control.gear = new_state
+            self.control.brakes = new_state
+            print(f"[KSP] Train/Freins: {'ON' if new_state else 'OFF'}")
+        except Exception as e:
+            print(f"[KRPC] Erreur gear/brakes: {e}")
 
     def toggle_map_camera(self) -> None:
-        with self._lock:
-            if not self.connected:
-                return
-            try:
-                mode = self.camera.mode
-                if mode == self.space_center.CameraMode.map:
-                    self.camera.mode = self.space_center.CameraMode.automatic
-                    print("[KSP] Caméra: AUTO")
-                else:
-                    self.camera.mode = self.space_center.CameraMode.map
-                    print("[KSP] Caméra: CARTE")
-            except Exception as e:
-                print(f"[KRPC] Erreur caméra: {e}")
+        if not self.connected:
+            return
+        try:
+            mode = self.camera.mode
+            if mode == self.space_center.CameraMode.map:
+                self.camera.mode = self.space_center.CameraMode.automatic
+                print("[KSP] Caméra: AUTO")
+            else:
+                self.camera.mode = self.space_center.CameraMode.map
+                print("[KSP] Caméra: CARTE")
+        except Exception as e:
+            print(f"[KRPC] Erreur caméra: {e}")

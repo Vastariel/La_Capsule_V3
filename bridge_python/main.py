@@ -49,9 +49,9 @@ def telemetry_loop(krpc: KRPCHandler, ws: WebSocketServer, hz: int, stop_event: 
         try:
             if krpc.connected:
                 krpc.update_telemetry()
-                ws.notify_new_data()
             else:
                 krpc.reconnect_if_needed()
+            ws.notify_new_data()
         except Exception as e:
             print(f"[TELEM] Erreur: {e}")
         stop_event.wait(interval)

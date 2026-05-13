@@ -63,10 +63,7 @@ class WebSocketServer:
 
     async def _broadcast_loop(self):
         while True:
-            try:
-                await asyncio.wait_for(self._new_data_event.wait(), timeout=self.interval)
-            except asyncio.TimeoutError:
-                pass
+            await self._new_data_event.wait()
             self._new_data_event.clear()
             if self.clients:
                 msg = json.dumps(self._build_payload())
