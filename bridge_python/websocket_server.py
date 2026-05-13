@@ -10,6 +10,7 @@ boucle par client).
 import asyncio
 import json
 import sys
+from typing import Optional
 
 try:
     import websockets
@@ -27,6 +28,8 @@ class WebSocketServer:
         self.port = port
         self.interval = 1.0 / max(1, update_hz)
         self.clients = set()
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._new_data_event: Optional[asyncio.Event] = None
 
     # ---- Gestion clients --------------------------------------------
 
@@ -53,8 +56,18 @@ class WebSocketServer:
         data["ascending"] = data.get("vertical_speed", 0) > 0
         return data
 
+    def notify_new_data(self) -> None:
+        """Signale depuis le thread télémétrie qu'une nouvelle donnée est disponible."""
+        if self._loop and self._new_data_event:
+            self._loop.call_soon_threadsafe(self._new_data_event.set)
+
     async def _broadcast_loop(self):
         while True:
+            try:
+                await asyncio.wait_for(self._new_data_event.wait(), timeout=self.interval)
+            except asyncio.TimeoutError:
+                pass
+            self._new_data_event.clear()
             if self.clients:
                 msg = json.dumps(self._build_payload())
                 dead = set()
@@ -64,11 +77,12 @@ class WebSocketServer:
                     except Exception:
                         dead.add(ws)
                 self.clients -= dead
-            await asyncio.sleep(self.interval)
 
     # ---- Lancement ---------------------------------------------------
 
     async def _run(self):
+        self._loop = asyncio.get_running_loop()
+        self._new_data_event = asyncio.Event()
         async with websockets.serve(self._handler, self.host, self.port):
             print(f"[WS] Écoute sur ws://{self.host}:{self.port}")
             await self._broadcast_loop()

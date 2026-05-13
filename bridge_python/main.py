@@ -42,13 +42,14 @@ def load_config() -> dict:
     sys.exit(1)
 
 
-def telemetry_loop(krpc: KRPCHandler, hz: int, stop_event: threading.Event) -> None:
-    """Lit la télémétrie kRPC à la cadence demandée et gère la reconnexion."""
+def telemetry_loop(krpc: KRPCHandler, ws: WebSocketServer, hz: int, stop_event: threading.Event) -> None:
+    """Lit la télémétrie kRPC à la cadence demandée et notifie le WebSocket immédiatement."""
     interval = 1.0 / max(1, hz)
     while not stop_event.is_set():
         try:
             if krpc.connected:
                 krpc.update_telemetry()
+                ws.notify_new_data()
             else:
                 krpc.reconnect_if_needed()
         except Exception as e:
@@ -127,7 +128,7 @@ def main() -> None:
     gpio_hz = 20
 
     telem_thread = threading.Thread(
-        target=telemetry_loop, args=(krpc, telem_hz, stop_event), daemon=True
+        target=telemetry_loop, args=(krpc, ws, telem_hz, stop_event), daemon=True
     )
     gpio_thread = threading.Thread(
         target=gpio_loop, args=(gpio, gpio_hz, stop_event), daemon=True
