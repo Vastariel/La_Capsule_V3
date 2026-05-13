@@ -62,13 +62,38 @@ theme_override_constants/margin_bottom = 20
 [node name="Content" type="VBoxContainer" parent="MarginContainer" unique_id=1621537916]
 layout_mode = 2
 theme = ExtResource("1_wlw6n")
-theme_override_constants/separation = 20
+theme_override_constants/separation = 45
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Content" unique_id=2108410548]
+[node name="HeaderVBox" type="VBoxContainer" parent="MarginContainer/Content" unique_id=1398861711]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="TopSeparator" type="ColorRect" parent="MarginContainer/Content/HeaderVBox" unique_id=514802411]
+custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
 theme = ExtResource("1_wlw6n")
 
-[node name="TopSeparator" type="ColorRect" parent="MarginContainer/Content" unique_id=514802411]
+[node name="HeaderRow" type="HBoxContainer" parent="MarginContainer/Content/HeaderVBox" unique_id=2108410548]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+
+[node name="TitleOneLabel" type="Label" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=2017785934]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.5882353)
+theme_override_font_sizes/font_size = 14
+text = "TÉLÉMÉTRIE · LIVE"
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=655481138]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TitleRightLabel" type="Label" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1697320563]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.5882353)
+theme_override_font_sizes/font_size = 14
+text = "LA CAPSULE"
+
+[node name="TopSeparator2" type="ColorRect" parent="MarginContainer/Content/HeaderVBox" unique_id=1470207415]
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
 theme = ExtResource("1_wlw6n")
@@ -78,48 +103,46 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("1_wlw6n")
 
-[node name="CenterContainer" type="Control" parent="MarginContainer/Content/CenterContainer" unique_id=69238648]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Content/CenterContainer" unique_id=1101163054]
 layout_mode = 2
 
-[node name="Surrounding" type="TextureRect" parent="MarginContainer/Content/CenterContainer/CenterContainer" unique_id=1083765300]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -254.0
-offset_top = -247.0
-offset_right = 418.0
-offset_bottom = 434.0
-grow_horizontal = 2
-grow_vertical = 2
-scale = Vector2(0.75, 0.75)
+[node name="CenterContainer" type="Control" parent="MarginContainer/Content/CenterContainer/MarginContainer" unique_id=69238648]
+layout_mode = 2
+
+[node name="Surrounding" type="TextureRect" parent="MarginContainer/Content/CenterContainer/MarginContainer/CenterContainer" unique_id=1083765300]
+layout_direction = 2
+layout_mode = 0
+offset_left = -213.0
+offset_top = -225.0
+offset_right = 459.0
+offset_bottom = 456.0
+scale = Vector2(0.65, 0.65)
 texture = ExtResource("3_or2ii")
 script = ExtResource("4_hhwjn")
 
-[node name="Inner Circle" type="HBoxContainer" parent="MarginContainer/Content/CenterContainer/CenterContainer" unique_id=1741606145]
+[node name="Inner Circle" type="HBoxContainer" parent="MarginContainer/Content/CenterContainer/MarginContainer/CenterContainer" unique_id=1741606145]
 layout_mode = 0
-offset_left = -212.0
-offset_top = -146.0
-offset_right = 356.0
-offset_bottom = 292.0
-scale = Vector2(0.75, 0.75)
+offset_left = -183.0
+offset_top = -129.0
+offset_right = 489.0
+offset_bottom = 309.0
+scale = Vector2(0.6, 0.6)
 size_flags_vertical = 4
 alignment = 1
 
-[node name="Border" type="TextureRect" parent="MarginContainer/Content/CenterContainer/CenterContainer/Inner Circle" unique_id=1697052225]
+[node name="Border" type="TextureRect" parent="MarginContainer/Content/CenterContainer/MarginContainer/CenterContainer/Inner Circle" unique_id=1697052225]
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("2_b4d12")
 stretch_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Content/CenterContainer/CenterContainer/Inner Circle" unique_id=1474025982]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Content/CenterContainer/MarginContainer/CenterContainer/Inner Circle" unique_id=1474025982]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Border2" type="TextureRect" parent="MarginContainer/Content/CenterContainer/CenterContainer/Inner Circle" unique_id=492429316]
+[node name="Border2" type="TextureRect" parent="MarginContainer/Content/CenterContainer/MarginContainer/CenterContainer/Inner Circle" unique_id=492429316]
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("2_b4d12")
@@ -131,6 +154,10 @@ layout_mode = 2
 size_flags_vertical = 4
 theme = ExtResource("1_wlw6n")
 theme_override_constants/separation = 8
+
+[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/Content/CenterContainer/Values" unique_id=871386269]
+layout_mode = 2
+theme_override_constants/margin_top = 30
 
 [node name="SpeedLabel" type="Label" parent="MarginContainer/Content/CenterContainer/Values" unique_id=339179170]
 layout_mode = 2
@@ -155,9 +182,11 @@ text = "m/s"
 horizontal_alignment = 1
 
 [node name="TopSeparator3" type="ColorRect" parent="MarginContainer/Content/CenterContainer/Values" unique_id=1513181320]
-custom_minimum_size = Vector2(0, 1)
+custom_minimum_size = Vector2(300, 1)
 layout_mode = 2
+size_flags_vertical = 3
 theme = ExtResource("1_wlw6n")
+color = Color(1, 1, 1, 0.29411766)
 
 [node name="AltLabel" type="Label" parent="MarginContainer/Content/CenterContainer/Values" unique_id=512635235]
 layout_mode = 2
@@ -172,6 +201,13 @@ theme_type_variation = &"LabelDigit"
 text = "000"
 horizontal_alignment = 1
 clip_text = true
+
+[node name="TopSeparator4" type="ColorRect" parent="MarginContainer/Content/CenterContainer/Values" unique_id=1788488796]
+custom_minimum_size = Vector2(300, 1)
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("1_wlw6n")
+color = Color(1, 1, 1, 0.29411766)
 
 [node name="VarioBox" type="VBoxContainer" parent="MarginContainer/Content/CenterContainer/Values" unique_id=412106871]
 layout_mode = 2
@@ -188,6 +224,15 @@ layout_mode = 2
 theme_override_fonts/font = SubResource("FontFile_b4d12")
 text = "+0.0 m/s"
 horizontal_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Content/CenterContainer/Values" unique_id=576783979]
+layout_mode = 2
+theme_override_constants/margin_top = 30
+
+[node name="MidSeparator" type="ColorRect" parent="MarginContainer/Content" unique_id=1417813211]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
 
 [node name="GaugesRow" type="HBoxContainer" parent="MarginContainer/Content" unique_id=997523297]
 layout_mode = 2
@@ -239,7 +284,7 @@ text = "0000"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="TopSeparator2" type="ColorRect" parent="MarginContainer/Content" unique_id=1997939832]
+[node name="BotSeparator" type="ColorRect" parent="MarginContainer/Content" unique_id=1997939832]
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
 theme = ExtResource("1_wlw6n")

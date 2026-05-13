@@ -120,6 +120,7 @@ func _process_message(text: String) -> void:
 	var peri = data.get("periapsis")
 	var vspeed = data.get("vertical_speed")
 	var gforce = data.get("g_force")
+	var mission  = data.get("mission_time")
 
 	if speed != null and speed_label:
 		speed_label.text = _format_speed(speed)
