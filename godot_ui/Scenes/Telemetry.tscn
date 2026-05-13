@@ -2,15 +2,30 @@
 
 [ext_resource type="Theme" uid="uid://oid7ghbseeuq" path="res://Assets/theme_default.tres" id="1_wlw6n"]
 [ext_resource type="Texture2D" uid="uid://baoerg0fxq1ai" path="res://Assets/inner_circle.png" id="2_b4d12"]
-[ext_resource type="Theme" uid="uid://ccgpnvgne501n" path="res://Assets/theme_data.tres" id="2_hhwjn"]
 [ext_resource type="Texture2D" uid="uid://chjw3qrpnoory" path="res://Assets/outer-circle.png" id="3_or2ii"]
-[ext_resource type="Texture2D" uid="uid://cjuvdtyvi0dno" path="res://Assets/stage_container.png" id="4_1l3ks"]
 [ext_resource type="Script" uid="uid://ba7yvyfe5rayd" path="res://Scripts/surrounding.gd" id="4_hhwjn"]
 [ext_resource type="Texture2D" uid="uid://8t3m7ttmbpff" path="res://Assets/distance.png" id="5_8fkpw"]
-[ext_resource type="Texture2D" uid="uid://c77o5ywpbofdq" path="res://Assets/stages hilight.png" id="5_b4d12"]
-[ext_resource type="PackedScene" uid="uid://d1a3mg4gc0axk" path="res://Scenes/rocket.tscn" id="9_wlw6n"]
 
-[sub_resource type="FontVariation" id="FontVariation_1l3ks"]
+[sub_resource type="FontFile" id="FontFile_b4d12"]
+cache/0/variation_coordinates = {}
+cache/0/face_index = 0
+cache/0/embolden = 0.0
+cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
+cache/0/spacing_top = 0
+cache/0/spacing_bottom = 0
+cache/0/spacing_space = 0
+cache/0/spacing_glyph = 0
+cache/0/baseline_offset = 0.0
+cache/0/16/0/ascent = 0.0
+cache/0/16/0/descent = 0.0
+cache/0/16/0/underline_position = 0.0
+cache/0/16/0/underline_thickness = 0.0
+cache/0/16/0/scale = 1.0
+cache/0/25/0/ascent = 0.0
+cache/0/25/0/descent = 0.0
+cache/0/25/0/underline_position = 0.0
+cache/0/25/0/underline_thickness = 0.0
+cache/0/25/0/scale = 1.0
 
 [node name="Control" type="Control" unique_id=176349739]
 layout_mode = 3
@@ -19,7 +34,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-metadata/_edit_lock_ = true
+theme = ExtResource("1_wlw6n")
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1715696202]
 layout_mode = 1
@@ -28,9 +43,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_wlw6n")
 color = Color(0.0392157, 0.0588235, 0.109804, 1)
 
-[node name="Content" type="VBoxContainer" parent="." unique_id=1621537916]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=712655531]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -38,485 +54,286 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_wlw6n")
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
 
-[node name="MarginContainer4" type="MarginContainer" parent="Content" unique_id=670846661]
+[node name="Content" type="VBoxContainer" parent="MarginContainer" unique_id=1621537916]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-metadata/_edit_lock_ = true
+theme = ExtResource("1_wlw6n")
+theme_override_constants/separation = 20
 
-[node name="Speed" type="HBoxContainer" parent="Content" unique_id=1258652851]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Content" unique_id=2108410548]
 layout_mode = 2
+theme = ExtResource("1_wlw6n")
 
-[node name="MarginContainer" type="MarginContainer" parent="Content/Speed" unique_id=981588621]
+[node name="TopSeparator" type="ColorRect" parent="MarginContainer/Content" unique_id=514802411]
+custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
-size_flags_horizontal = 3
+theme = ExtResource("1_wlw6n")
 
-[node name="Vitesse" type="VBoxContainer" parent="Content/Speed" unique_id=1343922159]
+[node name="CenterContainer" type="CenterContainer" parent="MarginContainer/Content" unique_id=1466219564]
 layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("1_wlw6n")
 
-[node name="Vitesse" type="Label" parent="Content/Speed/Vitesse" unique_id=339179170]
-layout_mode = 2
-size_flags_vertical = 3
-text = "VITESSE km/s"
-horizontal_alignment = 1
-
-[node name="SpeedValue" type="Label" parent="Content/Speed/Vitesse" unique_id=1987819914]
-custom_minimum_size = Vector2(750, 0)
-layout_mode = 2
-size_flags_vertical = 3
-theme = ExtResource("2_hhwjn")
-theme_type_variation = &"DigitalLarge"
-text = "0.000"
-horizontal_alignment = 1
-clip_text = true
-
-[node name="MarginContainer2" type="MarginContainer" parent="Content/Speed" unique_id=666712253]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="MarginContainer5" type="MarginContainer" parent="Content" unique_id=1103810789]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-metadata/_edit_lock_ = true
-
-[node name="CenterContainer" type="CenterContainer" parent="Content" unique_id=1466219564]
+[node name="CenterContainer" type="Control" parent="MarginContainer/Content/CenterContainer" unique_id=69238648]
 layout_mode = 2
 
-[node name="Surrounding" type="TextureRect" parent="Content/CenterContainer" unique_id=1083765300]
+[node name="Surrounding" type="TextureRect" parent="MarginContainer/Content/CenterContainer/CenterContainer" unique_id=1083765300]
 visible = false
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -254.0
+offset_top = -247.0
+offset_right = 418.0
+offset_bottom = 434.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.75, 0.75)
 texture = ExtResource("3_or2ii")
-stretch_mode = 2
 script = ExtResource("4_hhwjn")
-metadata/_edit_use_anchors_ = true
 
-[node name="Inner Circle" type="HBoxContainer" parent="Content/CenterContainer" unique_id=1741606145]
-visible = false
-layout_mode = 2
+[node name="Inner Circle" type="HBoxContainer" parent="MarginContainer/Content/CenterContainer/CenterContainer" unique_id=1741606145]
+layout_mode = 0
+offset_left = -212.0
+offset_top = -146.0
+offset_right = 356.0
+offset_bottom = 292.0
+scale = Vector2(0.75, 0.75)
 size_flags_vertical = 4
 alignment = 1
-metadata/_edit_lock_ = true
 
-[node name="Border" type="TextureRect" parent="Content/CenterContainer/Inner Circle" unique_id=1697052225]
+[node name="Border" type="TextureRect" parent="MarginContainer/Content/CenterContainer/CenterContainer/Inner Circle" unique_id=1697052225]
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("2_b4d12")
 stretch_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="Content/CenterContainer/Inner Circle" unique_id=1474025982]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Content/CenterContainer/CenterContainer/Inner Circle" unique_id=1474025982]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Border2" type="TextureRect" parent="Content/CenterContainer/Inner Circle" unique_id=492429316]
+[node name="Border2" type="TextureRect" parent="MarginContainer/Content/CenterContainer/CenterContainer/Inner Circle" unique_id=492429316]
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("2_b4d12")
 stretch_mode = 2
 flip_h = true
 
-[node name="Values" type="VBoxContainer" parent="Content/CenterContainer" unique_id=47094114]
+[node name="Values" type="VBoxContainer" parent="MarginContainer/Content/CenterContainer" unique_id=47094114]
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_constants/separation = 80
-alignment = 1
+theme = ExtResource("1_wlw6n")
+theme_override_constants/separation = 8
 
-[node name="Altitude" type="VBoxContainer" parent="Content/CenterContainer/Values" unique_id=1138711806]
+[node name="SpeedLabel" type="Label" parent="MarginContainer/Content/CenterContainer/Values" unique_id=339179170]
 layout_mode = 2
-size_flags_vertical = 4
-alignment = 1
+size_flags_vertical = 3
+theme = ExtResource("1_wlw6n")
+text = "VITESSE"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/Altitude" unique_id=512635235]
+[node name="SpeedValue" type="Label" parent="MarginContainer/Content/CenterContainer/Values" unique_id=1987819914]
 layout_mode = 2
-text = "ALTITUDE"
-
-[node name="AltitudeValue" type="Label" parent="Content/CenterContainer/Values/Altitude" unique_id=291114035]
-custom_minimum_size = Vector2(500, 0)
-layout_mode = 2
-theme = ExtResource("2_hhwjn")
-text = "000.000.000"
+size_flags_vertical = 3
+theme = ExtResource("1_wlw6n")
+theme_type_variation = &"LabelDigit"
+text = "000"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="TextureRect3" type="TextureRect" parent="Content/CenterContainer/Values/Altitude" unique_id=910526333]
+[node name="SpeedUnit" type="Label" parent="MarginContainer/Content/CenterContainer/Values" unique_id=283421612]
 layout_mode = 2
-texture = ExtResource("5_8fkpw")
-expand_mode = 5
-stretch_mode = 3
-
-[node name="Apostre" type="HBoxContainer" parent="Content/CenterContainer/Values" unique_id=48085732]
-layout_mode = 2
-
-[node name="Apoastre" type="VBoxContainer" parent="Content/CenterContainer/Values/Apostre" unique_id=883821282]
-layout_mode = 2
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/Apostre/Apoastre" unique_id=1957617346]
-layout_mode = 2
-text = "APOASTRE"
-
-[node name="ApoapsisValue" type="Label" parent="Content/CenterContainer/Values/Apostre/Apoastre" unique_id=1522828896]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-size_flags_horizontal = 8
-theme = ExtResource("2_hhwjn")
-text = "000.000.000"
-horizontal_alignment = 2
-clip_text = true
-
-[node name="TextureRect" type="TextureRect" parent="Content/CenterContainer/Values/Apostre/Apoastre" unique_id=1379832567]
-modulate = Color(0.627451, 0.627451, 0.627451, 1)
-layout_mode = 2
-texture = ExtResource("5_8fkpw")
-expand_mode = 5
-
-[node name="ApoTimeValue" type="Label" parent="Content/CenterContainer/Values/Apostre" unique_id=915977789]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-size_flags_horizontal = 8
-text = "--:--"
-horizontal_alignment = 2
-clip_text = true
-
-[node name="Périastre" type="HBoxContainer" parent="Content/CenterContainer/Values" unique_id=1361096831]
-layout_mode = 2
-
-[node name="Périastre" type="VBoxContainer" parent="Content/CenterContainer/Values/Périastre" unique_id=776964658]
-layout_mode = 2
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/Périastre/Périastre" unique_id=1512928876]
-layout_mode = 2
-text = "PERIASTRE"
-
-[node name="PeriapsisValue" type="Label" parent="Content/CenterContainer/Values/Périastre/Périastre" unique_id=1355302437]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-size_flags_horizontal = 8
-theme = ExtResource("2_hhwjn")
-text = "000.000.000"
-horizontal_alignment = 2
-clip_text = true
-
-[node name="TextureRect2" type="TextureRect" parent="Content/CenterContainer/Values/Périastre/Périastre" unique_id=902136651]
-modulate = Color(0.627451, 0.627451, 0.627451, 1)
-layout_mode = 2
-texture = ExtResource("5_8fkpw")
-expand_mode = 5
-
-[node name="PeriTimeValue" type="Label" parent="Content/CenterContainer/Values/Périastre" unique_id=1365687934]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-size_flags_horizontal = 8
-text = "--:--"
-horizontal_alignment = 2
-clip_text = true
-
-[node name="Données" type="HBoxContainer" parent="Content/CenterContainer/Values" unique_id=320422714]
-layout_mode = 2
-
-[node name="VSpeed" type="VBoxContainer" parent="Content/CenterContainer/Values/Données" unique_id=924422782]
-layout_mode = 2
-size_flags_vertical = 4
-alignment = 1
-
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/Données/VSpeed" unique_id=1764616650]
-layout_mode = 2
-text = "V-SPEED"
-
-[node name="VSpeedValue" type="Label" parent="Content/CenterContainer/Values/Données/VSpeed" unique_id=459558258]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-size_flags_horizontal = 8
-theme = ExtResource("2_hhwjn")
-text = "="
+text = "m/s"
 horizontal_alignment = 1
 
-[node name="GForce" type="VBoxContainer" parent="Content/CenterContainer/Values/Données" unique_id=674716453]
+[node name="TopSeparator3" type="ColorRect" parent="MarginContainer/Content/CenterContainer/Values" unique_id=1513181320]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+
+[node name="AltLabel" type="Label" parent="MarginContainer/Content/CenterContainer/Values" unique_id=512635235]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+text = "ALTITUDE SOL"
+horizontal_alignment = 1
+
+[node name="AltitudeValue" type="Label" parent="MarginContainer/Content/CenterContainer/Values" unique_id=291114035]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+theme_type_variation = &"LabelDigit"
+text = "000"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="VarioBox" type="VBoxContainer" parent="MarginContainer/Content/CenterContainer/Values" unique_id=412106871]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="VSpeedArrow" type="Label" parent="MarginContainer/Content/CenterContainer/Values/VarioBox" unique_id=420091646]
+layout_mode = 2
+text = "▲"
+horizontal_alignment = 1
+
+[node name="VSpeedValue" type="Label" parent="MarginContainer/Content/CenterContainer/Values/VarioBox" unique_id=459558258]
+clip_contents = true
+layout_mode = 2
+theme_override_fonts/font = SubResource("FontFile_b4d12")
+text = "+0.0 m/s"
+horizontal_alignment = 1
+
+[node name="GaugesRow" type="HBoxContainer" parent="MarginContainer/Content" unique_id=997523297]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+
+[node name="GForcePanel" type="PanelContainer" parent="MarginContainer/Content/GaugesRow" unique_id=418389917]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GForceVBox" type="VBoxContainer" parent="MarginContainer/Content/GaugesRow/GForcePanel" unique_id=674716453]
 layout_mode = 2
 size_flags_vertical = 4
+theme = ExtResource("1_wlw6n")
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/Données/GForce" unique_id=1024807319]
+[node name="GForceHeader" type="Label" parent="MarginContainer/Content/GaugesRow/GForcePanel/GForceVBox" unique_id=1024807319]
 layout_mode = 2
+theme = ExtResource("1_wlw6n")
 text = "G-FORCE"
 
-[node name="GForceValue" type="Label" parent="Content/CenterContainer/Values/Données/GForce" unique_id=815667601]
-custom_minimum_size = Vector2(250, 0)
+[node name="GForceValue" type="Label" parent="MarginContainer/Content/GaugesRow/GForcePanel/GForceVBox" unique_id=815667601]
 layout_mode = 2
-size_flags_horizontal = 8
-theme = ExtResource("2_hhwjn")
+theme = ExtResource("1_wlw6n")
+theme_type_variation = &"LabelDigit"
 text = "0.00"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="BoucherThermique" type="VBoxContainer" parent="Content/CenterContainer/Values/Données" unique_id=353841719]
+[node name="ShieldPanel" type="PanelContainer" parent="MarginContainer/Content/GaugesRow" unique_id=537928333]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ShieldVBox" type="VBoxContainer" parent="MarginContainer/Content/GaugesRow/ShieldPanel" unique_id=353841719]
 layout_mode = 2
 size_flags_vertical = 4
+theme = ExtResource("1_wlw6n")
 alignment = 1
 
-[node name="Label" type="Label" parent="Content/CenterContainer/Values/Données/BoucherThermique" unique_id=1772054444]
+[node name="ShieldHeader" type="Label" parent="MarginContainer/Content/GaugesRow/ShieldPanel/ShieldVBox" unique_id=1772054444]
 layout_mode = 2
+theme = ExtResource("1_wlw6n")
 text = "BOUCLIER (°C)"
 
-[node name="HeatTempValue" type="Label" parent="Content/CenterContainer/Values/Données/BoucherThermique" unique_id=1855903477]
-custom_minimum_size = Vector2(250, 0)
+[node name="HeatTempValue" type="Label" parent="MarginContainer/Content/GaugesRow/ShieldPanel/ShieldVBox" unique_id=1855903477]
 layout_mode = 2
-size_flags_horizontal = 8
-theme = ExtResource("2_hhwjn")
+theme = ExtResource("1_wlw6n")
+theme_type_variation = &"LabelDigit"
 text = "0000"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="MarginContainer6" type="MarginContainer" parent="Content" unique_id=531343993]
+[node name="TopSeparator2" type="ColorRect" parent="MarginContainer/Content" unique_id=1997939832]
+custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="Bottom" type="HBoxContainer" parent="Content" unique_id=203269681]
-visible = false
-layout_mode = 2
-theme_override_constants/separation = 25
-
-[node name="MarginContainer9" type="MarginContainer" parent="Content/Bottom" unique_id=1983418540]
-layout_mode = 2
-
-[node name="Etages" type="AspectRatioContainer" parent="Content/Bottom" unique_id=1326060971]
-visible = false
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Content/Bottom/Etages" unique_id=1170148048]
-layout_mode = 2
-
-[node name="HBoxContainer3" type="HBoxContainer" parent="Content/Bottom/Etages/VBoxContainer" unique_id=931266573]
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer3" unique_id=1559188670]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Stages" type="Label" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer3" unique_id=1804059354]
-custom_minimum_size = Vector2(80, 0)
-layout_mode = 2
-size_flags_stretch_ratio = 0.0
-theme_override_fonts/font = SubResource("FontVariation_1l3ks")
-text = "Étages"
-horizontal_alignment = 3
-vertical_alignment = 3
-
-[node name="MarginContainer2" type="MarginContainer" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer3" unique_id=1264561410]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.43
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="Content/Bottom/Etages/VBoxContainer" unique_id=1573733904]
-layout_mode = 2
-alignment = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer2" unique_id=1442983796]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_stretch_ratio = 10.54
-
-[node name="Divider" type="TextureRect" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer2" unique_id=1560081462]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_stretch_ratio = 15.14
-texture = ExtResource("5_b4d12")
-expand_mode = 5
-stretch_mode = 4
-
-[node name="MarginContainer2" type="MarginContainer" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer2" unique_id=2100548726]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_stretch_ratio = 2.84
-
-[node name="MarginContainer12" type="MarginContainer" parent="Content/Bottom/Etages/VBoxContainer" unique_id=384181507]
-layout_mode = 2
-theme_override_constants/margin_top = 5
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Content/Bottom/Etages/VBoxContainer" unique_id=908743752]
-layout_mode = 2
-size_flags_horizontal = 4
-
-[node name="Booster4" type="TextureRect" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer" unique_id=853989285]
-layout_mode = 2
-texture = ExtResource("4_1l3ks")
-
-[node name="Boosters" type="Label" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer/Booster4" unique_id=412815959]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -68.0
-offset_top = -238.0
-offset_right = 1.0
-offset_bottom = -215.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 13
-text = "Boost"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ProgressBar4" type="ProgressBar" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer/Booster4" unique_id=1282323026]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -28.0
-offset_top = -220.0
-offset_right = 28.0
-offset_bottom = -5.0
-grow_horizontal = 2
-grow_vertical = 0
-step = 0.5
-value = 100.0
-fill_mode = 3
-show_percentage = false
-metadata/_edit_group_ = true
-
-[node name="Booster3" type="TextureRect" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer" unique_id=593508589]
-layout_mode = 2
-texture = ExtResource("4_1l3ks")
-
-[node name="3" type="Label" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer/Booster3" unique_id=289070679]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -68.0
-offset_top = -240.0
-offset_right = 1.0
-offset_bottom = -217.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 16
-text = "3"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ProgressBar3" type="ProgressBar" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer/Booster3" unique_id=1987302453]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -28.0
-offset_top = -220.0
-offset_right = 28.0
-offset_bottom = -5.0
-grow_horizontal = 2
-grow_vertical = 0
-step = 0.5
-value = 100.0
-fill_mode = 3
-show_percentage = false
-metadata/_edit_group_ = true
-
-[node name="Booster2" type="TextureRect" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer" unique_id=30342793]
-layout_mode = 2
-texture = ExtResource("4_1l3ks")
-
-[node name="2" type="Label" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer/Booster2" unique_id=884997174]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -68.0
-offset_top = -240.0
-offset_right = 1.0
-offset_bottom = -217.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 16
-text = "2"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ProgressBar2" type="ProgressBar" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer/Booster2" unique_id=1480778103]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -28.0
-offset_top = -220.0
-offset_right = 28.0
-offset_bottom = -5.0
-grow_horizontal = 2
-grow_vertical = 0
-step = 0.5
-value = 100.0
-fill_mode = 3
-show_percentage = false
-metadata/_edit_group_ = true
-
-[node name="Booster1" type="TextureRect" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer" unique_id=993220163]
-layout_mode = 2
-texture = ExtResource("4_1l3ks")
-
-[node name="1" type="Label" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer/Booster1" unique_id=848545643]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -68.0
-offset_top = -240.0
-offset_right = 1.0
-offset_bottom = -217.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 16
-text = "1"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="FuelBar" type="ProgressBar" parent="Content/Bottom/Etages/VBoxContainer/HBoxContainer/Booster1" unique_id=288583672]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -28.0
-offset_top = -220.0
-offset_right = 28.0
-offset_bottom = -5.0
-grow_horizontal = 2
-grow_vertical = 0
-step = 0.5
-value = 100.0
-fill_mode = 3
-show_percentage = false
-metadata/_edit_group_ = true
-
-[node name="Rocket" parent="Content/Bottom" unique_id=1213018870 instance=ExtResource("9_wlw6n")]
-layout_mode = 2
-
-[node name="MarginContainer10" type="MarginContainer" parent="Content/Bottom" unique_id=1624860158]
-layout_mode = 2
-
-[node name="MarginContainer3" type="MarginContainer" parent="Content" unique_id=378943249]
-visible = false
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
 theme = ExtResource("1_wlw6n")
+
+[node name="ApoPeriPanel" type="PanelContainer" parent="MarginContainer/Content" unique_id=575274608]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+
+[node name="ApoPeriCell" type="HBoxContainer" parent="MarginContainer/Content/ApoPeriPanel" unique_id=2030262212]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+theme_override_constants/separation = 30
+
+[node name="Périastre" type="VBoxContainer" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell" unique_id=776964658]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Label" type="Label" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Périastre" unique_id=1512928876]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+text = "PERIASTRE"
+
+[node name="PeriapsisValue" type="Label" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Périastre" unique_id=1355302437]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+theme_type_variation = &"LabelDigit"
+text = "000.000"
+horizontal_alignment = 2
+clip_text = true
+
+[node name="TextureRect2" type="TextureRect" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Périastre" unique_id=902136651]
+modulate = Color(0.627451, 0.627451, 0.627451, 1)
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+texture = ExtResource("5_8fkpw")
+expand_mode = 5
+
+[node name="PeriTimeRow" type="HBoxContainer" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Périastre" unique_id=2129848915]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+
+[node name="PeriTimeValue" type="Label" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Périastre/PeriTimeRow" unique_id=1365687934]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("1_wlw6n")
+text = "--:--"
+horizontal_alignment = 2
+clip_text = true
+
+[node name="PeriTimeUnit" type="Label" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Périastre/PeriTimeRow" unique_id=1204188406]
+layout_mode = 2
+text = "arrivée"
+
+[node name="Apoastre" type="VBoxContainer" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell" unique_id=883821282]
+layout_mode = 2
+size_flags_vertical = 4
+theme = ExtResource("1_wlw6n")
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Label" type="Label" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Apoastre" unique_id=1957617346]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+text = "APOASTRE"
+
+[node name="ApoapsisValue" type="Label" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Apoastre" unique_id=1522828896]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+theme_type_variation = &"LabelDigit"
+text = "000.000"
+horizontal_alignment = 2
+clip_text = true
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Apoastre" unique_id=1379832567]
+modulate = Color(0.627451, 0.627451, 0.627451, 1)
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+texture = ExtResource("5_8fkpw")
+expand_mode = 5
+
+[node name="ApoTimeRow" type="HBoxContainer" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Apoastre" unique_id=1750158205]
+layout_mode = 2
+
+[node name="ApoTimeValue" type="Label" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Apoastre/ApoTimeRow" unique_id=915977789]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+text = "--:--"
+horizontal_alignment = 2
+clip_text = true
+
+[node name="ApoTimeUnit" type="Label" parent="MarginContainer/Content/ApoPeriPanel/ApoPeriCell/Apoastre/ApoTimeRow" unique_id=1296986754]
+layout_mode = 2
+text = "arrivée"

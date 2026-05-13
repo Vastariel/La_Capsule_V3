@@ -1,8 +1,0 @@
-[gd_resource type="Theme" format=3 uid="uid://ccgpnvgne501n"]
-
-[ext_resource type="FontFile" uid="uid://cvx4mvooryln0" path="res://Fonts/digital-7 (mono).ttf" id="1_bjr5w"]
-
-[resource]
-default_font = ExtResource("1_bjr5w")
-Label/font_sizes/font_size = 50
-Label/fonts/font = ExtResource("1_bjr5w")

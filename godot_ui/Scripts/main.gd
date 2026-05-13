@@ -24,14 +24,11 @@ var altitude_label: Label
 var periapsis_label: Label
 var apo_time_label: Label
 var peri_time_label: Label
-var vspeed_label: Label
+var vspeed_value: Label
+var vspeed_arrow: Label
 var gforce_label: Label
 var heat_temp_label: Label
-var fuel_bars: Array = []
 var rocket: Node = null
-
-const DETACHED_COLOR := Color(0.3, 0.3, 0.3, 1.0)
-const ATTACHED_COLOR := Color(1, 1, 1, 1)
 
 
 func _ready():
@@ -42,7 +39,6 @@ func _ready():
 		_first_attempt_time = Time.get_ticks_msec() / 1000.0
 		_connect()
 
-
 func _cache_ui_nodes():
 	speed_label = find_child("SpeedValue", true, false)
 	apoapsis_label = find_child("ApoapsisValue", true, false)
@@ -50,20 +46,10 @@ func _cache_ui_nodes():
 	periapsis_label = find_child("PeriapsisValue", true, false)
 	apo_time_label = find_child("ApoTimeValue", true, false)
 	peri_time_label = find_child("PeriTimeValue", true, false)
-	vspeed_label = find_child("VSpeedValue", true, false)
+	vspeed_value = find_child("VSpeedValue", true, false)
+	vspeed_arrow = find_child("VSpeedArrow", true, false)
 	gforce_label = find_child("GForceValue", true, false)
 	heat_temp_label = find_child("HeatTempValue", true, false)
-
-	var stage1 = find_child("FuelBar", true, false)
-	var stage2 = find_child("ProgressBar2", true, false)
-	var stage3 = find_child("ProgressBar3", true, false)
-	var stage4 = find_child("ProgressBar4", true, false)
-	fuel_bars = [stage1, stage2, stage3, stage4]
-
-	rocket = find_child("Rocket", true, false)
-	if rocket == null:
-		push_warning("Nœud 'Rocket' introuvable — jauges de carburant désactivées")
-
 
 func _process(delta):
 	if not connected and _reconnect_time > 0.0:
@@ -83,7 +69,6 @@ func _process(delta):
 			else:
 				_maybe_show_fallback()
 
-
 func _connect():
 	var url = "ws://%s:%d%s" % [ws_host, ws_port, ws_path]
 	var err = ws.connect_to_url(url)
@@ -93,7 +78,6 @@ func _connect():
 		print("[WS] Erreur connect_to_url: ", err)
 		_reconnect_time = reconnect_delay
 
-
 func _on_ws_connected():
 	connected = true
 	_fallback_shown = false
@@ -102,12 +86,10 @@ func _on_ws_connected():
 	if cw:
 		cw.hide()
 
-
 func _on_ws_closed():
 	connected = false
 	print("[WS] Déconnecté")
 	_reconnect_time = reconnect_delay
-
 
 func _maybe_show_fallback():
 	if _fallback_shown:
@@ -120,13 +102,11 @@ func _maybe_show_fallback():
 	if cw:
 		cw.show()
 
-
 func _check_incoming():
 	while ws.get_available_packet_count() > 0:
 		var packet = ws.get_packet()
 		if ws.was_string_packet():
 			_process_message(packet.get_string_from_utf8())
-
 
 func _process_message(text: String) -> void:
 	var result = JSON.parse_string(text)
@@ -149,8 +129,9 @@ func _process_message(text: String) -> void:
 		apoapsis_label.text = _format_big_number(float(apo))
 	if peri != null and periapsis_label:
 		periapsis_label.text = _format_big_number(float(peri))
-	if vspeed != null and vspeed_label:
-		vspeed_label.text = "+" if float(vspeed) > 0.0 else "-"
+	if vspeed != null and vspeed_arrow and vspeed_value:
+		vspeed_value.text = "%+.1f m/s" % float(vspeed)
+		vspeed_arrow.text = "▲" if float(vspeed) > 0.0 else "▼"
 
 	var apo_time = data.get("time_to_apoapsis")
 	var peri_time = data.get("time_to_periapsis")
@@ -165,34 +146,11 @@ func _process_message(text: String) -> void:
 	if gforce != null and gforce_label:
 		gforce_label.text = "%.2f" % float(gforce)
 
-	var stages = data.get("stages", [])
-	if stages is Array:
-		_update_stages(stages)
-		if rocket and rocket.has_method("update_from_stages"):
-			rocket.update_from_stages(stages)
 
 	emit_signal("telemetry_updated", data)
 
-
-func _update_stages(stages: Array):
-	for i in fuel_bars.size():
-		var bar = fuel_bars[i]
-		if bar == null:
-			continue
-		if i < stages.size():
-			var s = stages[i]
-			var pct = float(s.get("fuel_percent", 0.0))
-			var attached = bool(s.get("attached", true))
-			bar.value = clamp(pct, 0.0, bar.max_value)
-			bar.modulate = ATTACHED_COLOR if attached else DETACHED_COLOR
-		else:
-			bar.value = 0.0
-			bar.modulate = DETACHED_COLOR
-
-
 func _format_speed(s) -> String:
-	return "%.3f" % (float(s) / 1000.0)
-
+	return "%.0f" % (float(s))
 
 func _format_time(t: float) -> String:
 	if is_nan(t) or is_inf(t) or abs(t) > 86400.0:
@@ -206,7 +164,6 @@ func _format_time(t: float) -> String:
 		m = m % 60
 		return prefix + "%d:%02d:%02d" % [h, m, sec]
 	return prefix + "%02d:%02d" % [m, sec]
-
 
 func _format_big_number(n) -> String:
 	var val = int(n)

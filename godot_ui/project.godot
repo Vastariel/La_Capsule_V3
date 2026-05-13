@@ -8,6 +8,10 @@
 
 config_version=5
 
+[accessibility]
+
+general/updates_per_second=20
+
 [animation]
 
 compatibility/default_parent_skeleton_in_mesh_instance_3d=true
@@ -17,19 +21,26 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="Telemetry for Capule V3 on Godot"
 run/main_scene="uid://drr5rd3uvc6jr"
 config/features=PackedStringArray("4.6", "GL Compatibility")
+boot_splash/show_image=false
 
 [display]
 
-window/size/viewport_width=1080
-window/size/viewport_height=1920
+window/size/viewport_width=600
+window/size/viewport_height=1024
 window/size/mode=3
 window/size/initial_position_type=3
 window/size/resizable=false
 window/stretch/aspect="expand"
+window/handheld/orientation=1
 
 [editor_plugins]
 
 enabled=PackedStringArray()
+
+[gui]
+
+theme/custom="uid://oid7ghbseeuq"
+theme/custom_font="uid://1y7irbroxvxj"
 
 [rendering]
 

@@ -1,4 +1,23 @@
 [gd_resource type="Theme" format=3 uid="uid://oid7ghbseeuq"]
 
+[ext_resource type="FontFile" uid="uid://cvx4mvooryln0" path="res://Fonts/digital-7 (mono).ttf" id="1_41i3v"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_osqvr"]
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.2509804)
+
 [resource]
+BoxContainer/constants/separation = 20
 Label/font_sizes/font_size = 25
+LabelDigit/base_type = &"Label"
+LabelDigit/font_sizes/font_size = 47
+LabelDigit/fonts/font = ExtResource("1_41i3v")
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_osqvr")
