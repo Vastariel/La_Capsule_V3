@@ -211,43 +211,54 @@ class KRPCHandler:
     # ---- Télémétrie --------------------------------------------------
 
     def update_telemetry(self) -> None:
+        # Lock court : snapshot des références seulement.
         with self._lock:
             if not self.connected:
                 return
-            try:
-                streams = self._streams
-                new_stage = self.telemetry.get("current_stage", 0)
-                if streams:
-                    self.telemetry["altitude"] = streams["altitude"]()
-                    self.telemetry["speed"] = streams["speed"]()
-                    self.telemetry["vertical_speed"] = streams["vertical_speed"]()
-                    self.telemetry["g_force"] = streams["g_force"]()
-                    self.telemetry["apoapsis"] = streams["apoapsis"]()
-                    self.telemetry["periapsis"] = streams["periapsis"]()
-                    self.telemetry["time_to_apoapsis"] = streams["time_to_apoapsis"]()
-                    self.telemetry["time_to_periapsis"] = streams["time_to_periapsis"]()
-                    new_stage = streams["current_stage"]()
-                    self.telemetry["engines_active"] = streams["throttle"]() > 0.0
-                else:
-                    # Fallback RPC direct si les streams n'ont pas pu s'ouvrir.
-                    self.telemetry["altitude"] = self.flight.surface_altitude
-                    self.telemetry["speed"] = self.flight.speed
-                    self.telemetry["vertical_speed"] = self.flight.vertical_speed
-                    self.telemetry["g_force"] = self.flight.g_force
-                    self.telemetry["apoapsis"] = self.orbit.apoapsis_altitude
-                    self.telemetry["periapsis"] = self.orbit.periapsis_altitude
-                    self.telemetry["time_to_apoapsis"] = self.orbit.time_to_apoapsis
-                    self.telemetry["time_to_periapsis"] = self.orbit.time_to_periapsis
-                    new_stage = self.control.current_stage
-                    self.telemetry["engines_active"] = self.control.throttle > 0.0
-                self._heat_counter += 1
-                if self._heat_counter >= 20:
-                    self._heat_counter = 0
-                    self.telemetry["heat_shield_temp"] = self._poll_heat_shield_temp()
+            streams = self._streams
+            flight, orbit, control = self.flight, self.orbit, self.control
+
+        # Lectures réseau sans lock : get_telemetry() reste libre pendant ce temps.
+        try:
+            new_vals: Dict = {}
+            if streams:
+                new_vals["altitude"]          = streams["altitude"]()
+                new_vals["speed"]             = streams["speed"]()
+                new_vals["vertical_speed"]    = streams["vertical_speed"]()
+                new_vals["g_force"]           = streams["g_force"]()
+                new_vals["apoapsis"]          = streams["apoapsis"]()
+                new_vals["periapsis"]         = streams["periapsis"]()
+                new_vals["time_to_apoapsis"]  = streams["time_to_apoapsis"]()
+                new_vals["time_to_periapsis"] = streams["time_to_periapsis"]()
+                new_stage                     = streams["current_stage"]()
+                new_vals["engines_active"]    = streams["throttle"]() > 0.0
+            else:
+                # Fallback RPC direct si les streams n'ont pas pu s'ouvrir.
+                new_vals["altitude"]          = flight.surface_altitude
+                new_vals["speed"]             = flight.speed
+                new_vals["vertical_speed"]    = flight.vertical_speed
+                new_vals["g_force"]           = flight.g_force
+                new_vals["apoapsis"]          = orbit.apoapsis_altitude
+                new_vals["periapsis"]         = orbit.periapsis_altitude
+                new_vals["time_to_apoapsis"]  = orbit.time_to_apoapsis
+                new_vals["time_to_periapsis"] = orbit.time_to_periapsis
+                new_stage                     = control.current_stage
+                new_vals["engines_active"]    = control.throttle > 0.0
+
+            self._heat_counter += 1
+            if self._heat_counter >= 20:
+                self._heat_counter = 0
+                new_vals["heat_shield_temp"] = self._poll_heat_shield_temp()
+
+            # Lock court : écriture atomique du dict partagé.
+            with self._lock:
+                self.telemetry.update(new_vals)
                 self._check_vessel_changed(new_stage)
                 self.telemetry["current_stage"] = new_stage
-            except Exception as e:
-                print(f"[KRPC] Erreur télémétrie: {e}")
+
+        except Exception as e:
+            print(f"[KRPC] Erreur télémétrie: {e}")
+            with self._lock:
                 self.connected = False
                 self._close_streams()
 
