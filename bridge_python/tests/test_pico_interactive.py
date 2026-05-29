@@ -38,7 +38,7 @@ def main() -> int:
         deadzone=tcfg.get("deadzone_percent", 3.0) / 100.0,
         output_deadband=tcfg.get("output_deadband_percent", 1.0) / 100.0,
     )
-    if not pico.connected:
+    if not pico.connect():
         print(f"✗ Pico non connecté: {pico.last_error}")
         return 1
 
