@@ -5,27 +5,22 @@
     "stream_port": 50001,
     "reconnect_timeout_s": 5
   },
-
   "telemetry": {
     "update_hz": 20
   },
-
   "websocket": {
     "host": "0.0.0.0",
     "port": 8080,
     "update_hz": 20
   },
-
   "hardware": {
     "pico": {
       "port": "/dev/ttyACM0",
       "adc_channel_throttle": 0
     },
-
     "gpio": {
       "raspi_ip": "127.0.0.1",
       "use_remote": true,
-
       "leds_rouges": {
         "brightness": 0.2,
         "active_high": true,
@@ -36,7 +31,6 @@
           "21": "STAGE_3"
         }
       },
-
       "leds_vertes": {
         "brightness": 0.1,
         "active_high": true,
@@ -45,31 +39,88 @@
           "12": "RCS"
         }
       },
-
       "leviers": {
         "16": "SAS",
         "26": "RCS",
         "22": "THROTTLE_CONTROL"
       },
-
       "boutons": {
-        "20": { "type": "ag", "value": 1, "name": "ENGINE_START" },
-        "23": { "type": "ag", "value": 2, "name": "STAGE_BOOSTERS" },
-        "8":  { "type": "ag", "value": 3, "name": "STAGE_1" },
-        "4":  { "type": "ag", "value": 4, "name": "STAGE_2" },
-        "19": { "type": "ag", "value": 5, "name": "STAGE_3" },
-        "13": { "type": "ag", "value": 6, "name": "PARACHUTE" },
-        "6":  { "type": "ag", "value": 7, "name": "HEAT_SHIELD" },
-        "7":  { "type": "ag", "value": 10, "name": "FAIRING" },
-        "11": { "type": "gear_brakes", "name": "LANDING_GEAR_BRAKES" },
-        "5":  { "type": "map_toggle", "name": "TOGGLE_MAP" }
+        "20": {
+          "type": "ag",
+          "value": 1,
+          "name": "ENGINE_START"
+        },
+        "23": {
+          "type": "ag",
+          "value": 2,
+          "name": "STAGE_BOOSTERS"
+        },
+        "8": {
+          "type": "ag",
+          "value": 3,
+          "name": "STAGE_1"
+        },
+        "4": {
+          "type": "ag",
+          "value": 4,
+          "name": "STAGE_2"
+        },
+        "19": {
+          "type": "ag",
+          "value": 5,
+          "name": "STAGE_3"
+        },
+        "13": {
+          "type": "ag",
+          "value": 6,
+          "name": "PARACHUTE"
+        },
+        "6": {
+          "type": "ag",
+          "value": 7,
+          "name": "HEAT_SHIELD"
+        },
+        "7": {
+          "type": "ag",
+          "value": 10,
+          "name": "FAIRING"
+        },
+        "11": {
+          "type": "gear_brakes",
+          "name": "LANDING_GEAR_BRAKES"
+        },
+        "5": {
+          "type": "map_toggle",
+          "name": "TOGGLE_MAP"
+        }
       }
     }
   },
-
   "throttle": {
     "smoothing_alpha": 0.25,
     "deadzone_percent": 3.0,
-    "output_deadband_percent": 1.0
+    "output_deadband_percent": 1.0,
+    "calibration": [
+      [
+        0.0,
+        19
+      ],
+      [
+        0.25,
+        1403
+      ],
+      [
+        0.5,
+        2583
+      ],
+      [
+        0.75,
+        3337
+      ],
+      [
+        1.0,
+        4094
+      ]
+    ]
   }
 }

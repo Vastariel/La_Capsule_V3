@@ -100,6 +100,7 @@ def main() -> None:
         alpha=tcfg.get("smoothing_alpha", 0.25),
         deadzone=tcfg.get("deadzone_percent", 3.0) / 100.0,
         output_deadband=tcfg.get("output_deadband_percent", 1.0) / 100.0,
+        calibration=tcfg.get("calibration"),
     )
 
     # ---- GPIO -------------------------------------------------------

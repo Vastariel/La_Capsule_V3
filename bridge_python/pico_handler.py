@@ -26,12 +26,18 @@ class PicoHandler:
         alpha: float = 0.25,
         deadzone: float = 0.03,
         output_deadband: float = 0.01,
+        calibration: Optional[list] = None,
     ):
         self.port = port
         self.adc_channel = adc_channel
         self.alpha = alpha
         self.deadzone = deadzone
         self.output_deadband = output_deadband
+
+        # Table d'étalonnage : corrige la non-linéarité du potentiomètre.
+        # Format en config : [[fraction, raw_adc], ...] (fraction 0..1).
+        # Stockée triée par valeur brute croissante : (raw, fraction).
+        self._calib = self._build_calibration(calibration)
 
         self.pico = None
         self.connected = False
@@ -44,6 +50,53 @@ class PicoHandler:
         # Pas de self.connect() ici : picod stocke son état dans un
         # threading.local() — la connexion doit être faite depuis le thread
         # qui fera ensuite les adc_read(). L'appelant (gpio_loop) s'en charge.
+
+    # ---- Étalonnage --------------------------------------------------
+
+    @staticmethod
+    def _build_calibration(calibration: Optional[list]) -> list:
+        """Transforme [[fraction, raw], ...] en liste (raw, fraction) triée
+        par valeur brute croissante. Retourne [] si pas d'étalonnage valide.
+        """
+        if not calibration:
+            return []
+        pts = []
+        for item in calibration:
+            try:
+                frac, raw = float(item[0]), float(item[1])
+            except (TypeError, ValueError, IndexError):
+                continue
+            pts.append((raw, max(0.0, min(1.0, frac))))
+        if len(pts) < 2:
+            return []
+        # Tri par raw croissant ; en cas de doublon de raw, on garde le 1er.
+        pts.sort(key=lambda p: p[0])
+        dedup = []
+        for raw, frac in pts:
+            if not dedup or raw > dedup[-1][0]:
+                dedup.append((raw, frac))
+        return dedup if len(dedup) >= 2 else []
+
+    def _apply_calibration(self, raw: float) -> float:
+        """Convertit une valeur brute ADC en fraction 0..1 corrigée via
+        l'interpolation linéaire par morceaux de la table d'étalonnage.
+
+        Sans table, retombe sur la normalisation linéaire raw/4095.
+        """
+        pts = self._calib
+        if not pts:
+            return max(0.0, min(1.0, raw / 4095.0))
+        if raw <= pts[0][0]:
+            return pts[0][1]
+        if raw >= pts[-1][0]:
+            return pts[-1][1]
+        for i in range(len(pts) - 1):
+            r0, f0 = pts[i]
+            r1, f1 = pts[i + 1]
+            if r0 <= raw <= r1:
+                t = (raw - r0) / (r1 - r0)
+                return f0 + t * (f1 - f0)
+        return max(0.0, min(1.0, raw / 4095.0))
 
     # ---- Connexion ---------------------------------------------------
 
@@ -92,7 +145,7 @@ class PicoHandler:
         if raw is None:
             return None
 
-        norm = max(0.0, min(1.0, raw / 4095.0))
+        norm = self._apply_calibration(raw)
         if self._ema is None:
             self._ema = norm
         else:
