@@ -1,10 +1,28 @@
 [gd_scene format=3 uid="uid://dw0y8cwqnon53"]
 
 [ext_resource type="Theme" uid="uid://oid7ghbseeuq" path="res://Assets/theme_default.tres" id="1_wlw6n"]
+[ext_resource type="Script" uid="uid://dv2gfdaisu0hb" path="res://Scripts/live_dot.gd" id="2_1l3ks"]
 [ext_resource type="Texture2D" uid="uid://baoerg0fxq1ai" path="res://Assets/inner_circle.png" id="2_b4d12"]
+[ext_resource type="Texture2D" uid="uid://b8ufj58xareq7" path="res://Assets/Logotype filaire-01.png" id="2_or2ii"]
 [ext_resource type="Texture2D" uid="uid://chjw3qrpnoory" path="res://Assets/outer-circle.png" id="3_or2ii"]
 [ext_resource type="Script" uid="uid://ba7yvyfe5rayd" path="res://Scripts/surrounding.gd" id="4_hhwjn"]
 [ext_resource type="Texture2D" uid="uid://8t3m7ttmbpff" path="res://Assets/distance.png" id="5_8fkpw"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8fkpw"]
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+bg_color = Color(1, 1, 1, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
 
 [sub_resource type="FontFile" id="FontFile_b4d12"]
 subpixel_positioning = 0
@@ -79,6 +97,13 @@ theme = ExtResource("1_wlw6n")
 [node name="HeaderRow" type="HBoxContainer" parent="MarginContainer/Content/HeaderVBox" unique_id=2108410548]
 layout_mode = 2
 theme = ExtResource("1_wlw6n")
+theme_override_constants/separation = 7
+
+[node name="ColorRect" type="PanelContainer" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1469159345]
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_8fkpw")
+script = ExtResource("2_1l3ks")
 
 [node name="TitleOneLabel" type="Label" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=2017785934]
 layout_mode = 2
@@ -90,11 +115,26 @@ text = "TÉLÉMÉTRIE · LIVE"
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TitleRightLabel" type="Label" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1697320563]
+[node name="TitleOneLabel2" type="Label" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=2066913044]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.5882353)
 theme_override_font_sizes/font_size = 14
-text = "LA CAPSULE"
+text = "LA CAPSULE · AURORALPES"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="TitleRightLabel2" type="Label" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1293874452]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.5882353)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 2
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1026729388]
+modulate = Color(1, 1, 1, 0.5882353)
+layout_mode = 2
+texture = ExtResource("2_or2ii")
+expand_mode = 3
+stretch_mode = 4
 
 [node name="TopSeparator2" type="ColorRect" parent="MarginContainer/Content/HeaderVBox" unique_id=1470207415]
 custom_minimum_size = Vector2(0, 1)
@@ -104,6 +144,7 @@ theme = ExtResource("1_wlw6n")
 [node name="CenterContainer" type="CenterContainer" parent="MarginContainer/Content" unique_id=1466219564]
 layout_mode = 2
 size_flags_horizontal = 4
+size_flags_vertical = 3
 theme = ExtResource("1_wlw6n")
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Content/CenterContainer" unique_id=1101163054]
@@ -113,24 +154,38 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="Surrounding" type="TextureRect" parent="MarginContainer/Content/CenterContainer/MarginContainer/CenterContainer" unique_id=1083765300]
-visible = false
-layout_direction = 2
-layout_mode = 0
-offset_left = -213.0
-offset_top = -225.0
-offset_right = 459.0
-offset_bottom = 456.0
-scale = Vector2(0.65, 0.65)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -339.00003
+offset_top = -340.0
+offset_right = 332.99997
+offset_bottom = 341.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.63, 0.63)
+pivot_offset = Vector2(336, 340)
 texture = ExtResource("3_or2ii")
 script = ExtResource("4_hhwjn")
 
 [node name="Inner Circle" type="HBoxContainer" parent="MarginContainer/Content/CenterContainer/MarginContainer/CenterContainer" unique_id=1741606145]
-layout_mode = 0
-offset_left = -183.0
-offset_top = -129.0
-offset_right = 489.0
-offset_bottom = 309.0
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -321.0
+offset_top = -219.0
+offset_right = 351.0
+offset_bottom = 219.0
+grow_horizontal = 2
+grow_vertical = 2
 scale = Vector2(0.6, 0.6)
+pivot_offset = Vector2(336, 219)
 size_flags_vertical = 4
 alignment = 1
 

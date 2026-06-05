@@ -21,7 +21,9 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="Telemetry for Capule V3 on Godot"
 run/main_scene="uid://drr5rd3uvc6jr"
 config/features=PackedStringArray("4.6", "GL Compatibility")
-boot_splash/show_image=false
+boot_splash/bg_color=Color(0.039215688, 0.05882353, 0.10980392, 1)
+boot_splash/stretch_mode=5
+boot_splash/image="uid://b8ufj58xareq7"
 
 [display]
 
@@ -30,6 +32,7 @@ window/size/viewport_height=1024
 window/size/mode=3
 window/size/initial_position_type=3
 window/size/resizable=false
+window/size/borderless=true
 window/stretch/aspect="expand"
 window/handheld/orientation=1
 
