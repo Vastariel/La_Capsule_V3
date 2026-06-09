@@ -25,6 +25,7 @@ STREAM_RATES_HZ: Dict[str, float] = {
     "vertical_speed": 20.0,
     "throttle": 20.0,
     "g_force": 10.0,
+    "pitch": 10.0,
     "current_stage": 5.0,
     "apoapsis": 5.0,
     "periapsis": 5.0,
@@ -66,6 +67,7 @@ class KRPCHandler:
             "speed": 0.0,
             "vertical_speed": 0.0,
             "g_force": 0.0,
+            "pitch": 0.0,
             "apoapsis": 0.0,
             "periapsis": 0.0,
             "time_to_apoapsis": 0.0,
@@ -135,6 +137,7 @@ class KRPCHandler:
                 "speed": c.add_stream(getattr, self.flight, "speed"),
                 "vertical_speed": c.add_stream(getattr, self.flight, "vertical_speed"),
                 "g_force": c.add_stream(getattr, self.flight, "g_force"),
+                "pitch": c.add_stream(getattr, self.flight, "pitch"),
                 "apoapsis": c.add_stream(getattr, self.orbit, "apoapsis_altitude"),
                 "periapsis": c.add_stream(getattr, self.orbit, "periapsis_altitude"),
                 "time_to_apoapsis": c.add_stream(getattr, self.orbit, "time_to_apoapsis"),
@@ -230,6 +233,7 @@ class KRPCHandler:
                 new_vals["speed"]             = streams["speed"]()
                 new_vals["vertical_speed"]    = streams["vertical_speed"]()
                 new_vals["g_force"]           = streams["g_force"]()
+                new_vals["pitch"]             = streams["pitch"]()
                 new_vals["apoapsis"]          = streams["apoapsis"]()
                 new_vals["periapsis"]         = streams["periapsis"]()
                 new_vals["time_to_apoapsis"]  = streams["time_to_apoapsis"]()
@@ -242,6 +246,7 @@ class KRPCHandler:
                 new_vals["speed"]             = flight.speed
                 new_vals["vertical_speed"]    = flight.vertical_speed
                 new_vals["g_force"]           = flight.g_force
+                new_vals["pitch"]             = flight.pitch
                 new_vals["apoapsis"]          = orbit.apoapsis_altitude
                 new_vals["periapsis"]         = orbit.periapsis_altitude
                 new_vals["time_to_apoapsis"]  = orbit.time_to_apoapsis

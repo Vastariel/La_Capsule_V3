@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Lanceur La Capsule V3.
-#   1. Démarre le bridge Python (main.py)
+#   1. Démarre le bridge Python (main.py) dans une fenêtre de terminal
 #   2. Attend 5 secondes
 #   3. Lance l'application Godot (capsule.arm4)
 #
@@ -13,6 +13,7 @@ set -u
 BRIDGE="/home/capsule/Desktop/La_Capsule_V3/bridge_python/main.py"
 GODOT_APP="/home/capsule/Desktop/La_Capsule_V3/capsule.arm64"
 WORKDIR="$(dirname "$BRIDGE")"
+BRIDGE_PIDFILE="/tmp/capsule_bridge.pid"
 
 # Écran : rotation attendue (90° horaire = transform 270) sur la sortie HDMI.
 SCREEN_OUTPUT="HDMI-A-1"
@@ -27,6 +28,7 @@ cleanup() {
     [ -n "$GODOT_PID" ]  && kill "$GODOT_PID"  2>/dev/null
     [ -n "$BRIDGE_PID" ] && kill "$BRIDGE_PID" 2>/dev/null
     wait 2>/dev/null
+    rm -f "$BRIDGE_PIDFILE"
     echo "[LAUNCH] Terminé."
 }
 trap cleanup EXIT INT TERM
@@ -80,10 +82,29 @@ if [ ! -f "$BRIDGE" ]; then
     exit 1
 fi
 
-echo "[LAUNCH] Démarrage du bridge Python..."
+echo "[LAUNCH] Démarrage du bridge Python (dans un terminal)..."
 cd "$WORKDIR" || exit 1
-python3 "$BRIDGE" &
-BRIDGE_PID=$!
+
+# main.py est lancé dans une fenêtre lxterminal pour que ses logs soient
+# visibles. Le processus python écrit son propre PID dans BRIDGE_PIDFILE
+# (echo $$ avant le exec : le shell devient python, donc le PID reste valide)
+# afin que la surveillance plus bas puisse suivre le vrai bridge et pas la
+# fenêtre du terminal (lxterminal réutilise un démon, son PID n'est pas fiable).
+rm -f "$BRIDGE_PIDFILE"
+lxterminal --no-remote --title="La Capsule — bridge" \
+    -e bash -c "echo \$\$ > '$BRIDGE_PIDFILE'; exec python3 '$BRIDGE'" &
+
+# On attend que le bridge ait écrit son PID (max ~5 s).
+for _ in $(seq 1 50); do
+    [ -s "$BRIDGE_PIDFILE" ] && break
+    sleep 0.1
+done
+
+if [ ! -s "$BRIDGE_PIDFILE" ]; then
+    echo "✗ Le bridge Python n'a pas démarré (PID introuvable)." >&2
+    exit 1
+fi
+BRIDGE_PID="$(cat "$BRIDGE_PIDFILE")"
 
 # ---- 2. Attente -----------------------------------------------------------
 echo "[LAUNCH] Attente de 5 secondes..."
@@ -107,4 +128,8 @@ echo "[LAUNCH] Démarrage de l'application Godot..."
 GODOT_PID=$!
 
 # ---- Surveillance : on s'arrête dès qu'un des deux se termine --------------
-wait -n "$BRIDGE_PID" "$GODOT_PID"
+# Le bridge tourne dans une fenêtre lxterminal (pas un enfant direct de ce
+# shell), donc on ne peut pas utiliser « wait -n » : on surveille par polling.
+while kill -0 "$BRIDGE_PID" 2>/dev/null && kill -0 "$GODOT_PID" 2>/dev/null; do
+    sleep 1
+done

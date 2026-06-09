@@ -27,6 +27,7 @@ var peri_time_label: Label
 var vspeed_value: Label
 var vspeed_arrow: Label
 var gforce_label: Label
+var pitch_label: Label
 var heat_temp_label: Label
 var rocket: Node = null
 
@@ -49,6 +50,7 @@ func _cache_ui_nodes():
 	vspeed_value = find_child("VSpeedValue", true, false)
 	vspeed_arrow = find_child("VSpeedArrow", true, false)
 	gforce_label = find_child("GForceValue", true, false)
+	pitch_label = find_child("PitchValue", true, false)
 	heat_temp_label = find_child("HeatTempValue", true, false)
 
 func _process(delta):
@@ -120,6 +122,7 @@ func _process_message(text: String) -> void:
 	var peri = data.get("periapsis")
 	var vspeed = data.get("vertical_speed")
 	var gforce = data.get("g_force")
+	var pitch = data.get("pitch")
 	var mission  = data.get("mission_time")
 
 	if speed != null and speed_label:
@@ -146,6 +149,8 @@ func _process_message(text: String) -> void:
 		heat_temp_label.text = "%d" % int(float(heat_temp) - 273.15)
 	if gforce != null and gforce_label:
 		gforce_label.text = "%.2f" % float(gforce)
+	if pitch != null and pitch_label:
+		pitch_label.text = "%.1f°" % float(pitch)
 
 
 	emit_signal("telemetry_updated", data)
