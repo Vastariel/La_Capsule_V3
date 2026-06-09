@@ -320,12 +320,37 @@ alignment = 1
 layout_mode = 2
 theme = ExtResource("1_wlw6n")
 text = "G-FORCE"
+horizontal_alignment = 1
 
 [node name="GForceValue" type="Label" parent="MarginContainer/Content/GaugesRow/GForcePanel/GForceVBox" unique_id=815667601]
 layout_mode = 2
 theme = ExtResource("1_wlw6n")
 theme_type_variation = &"LabelDigit"
 text = "0.00"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="PitchPanel" type="PanelContainer" parent="MarginContainer/Content/GaugesRow" unique_id=600981742]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PitchVBox" type="VBoxContainer" parent="MarginContainer/Content/GaugesRow/PitchPanel" unique_id=1287831477]
+layout_mode = 2
+size_flags_vertical = 4
+theme = ExtResource("1_wlw6n")
+alignment = 1
+
+[node name="PitchHeader" type="Label" parent="MarginContainer/Content/GaugesRow/PitchPanel/PitchVBox" unique_id=769476093]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+text = "PITCH"
+horizontal_alignment = 1
+
+[node name="PitchValue" type="Label" parent="MarginContainer/Content/GaugesRow/PitchPanel/PitchVBox" unique_id=156346178]
+layout_mode = 2
+theme = ExtResource("1_wlw6n")
+theme_type_variation = &"LabelDigit"
+text = "0"
 horizontal_alignment = 1
 clip_text = true
 
@@ -343,6 +368,7 @@ alignment = 1
 layout_mode = 2
 theme = ExtResource("1_wlw6n")
 text = "BOUCLIER (°C)"
+horizontal_alignment = 1
 
 [node name="HeatTempValue" type="Label" parent="MarginContainer/Content/GaugesRow/ShieldPanel/ShieldVBox" unique_id=1855903477]
 layout_mode = 2

@@ -1,6 +1,6 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1781026965
-export_presets.cfg::TextFile::-1::1781024892::0::1::::<><><>0<>0<><>::
+::res://::1781031685
+export_presets.cfg::TextFile::-1::1781029516::0::1::::<><><>0<>0<><>::
 ::res://Assets/::1781023030
 boosters.png::CompressedTexture2D::8338678921854887366::1776522291::1778665575::1::::<><><>0<>0<>c30aa544c13fc4c51a3f50d16a57cd96<>res://.godot/imported/boosters.png-3d3d896862adf8c6d99abb73dbc0075b.ctex::
 coiffe.png::CompressedTexture2D::984244313961965170::1776522291::1778665575::1::::<><><>0<>0<>089c4a93782d61af0dfb232af42a3283<>res://.godot/imported/coiffe.png-3247f649e04a9bef87ddf2c16db2d8ae.ctex::
@@ -24,8 +24,8 @@ digital-7 (mono).ttf::FontFile::6296071119722728207::1767981060::1778252646::1::
 main.tscn::PackedScene::8389418884785707423::1780507091::0::1::::<><><>0<>0<><>::uid://rw1w6bmapgq7::::res://Scripts/main.gd<>uid://dw0y8cwqnon53::::res://Scenes/Telemetry.tscn<>uid://dgoefypnwhgi5::::res://Scripts/connection_window.gd
 menu_selector.tscn::PackedScene::2748287698354400931::1776522291::0::1::::<><><>0<>0<><>::uid://lvx7x0wfup0h::::res://Scenes/option_box.tscn
 Telemetry.tscn::PackedScene::8756542333770069644::1781025233::0::1::::<><><>0<>0<><>::uid://oid7ghbseeuq::::res://Assets/theme_default.tres<>uid://dv2gfdaisu0hb::::res://Scripts/live_dot.gd<>uid://baoerg0fxq1ai::::res://Assets/inner_circle.png<>uid://b8ufj58xareq7::::res://Assets/Logotype filaire-01.png<>uid://chjw3qrpnoory::::res://Assets/outer-circle.png<>uid://ba7yvyfe5rayd::::res://Scripts/surrounding.gd<>uid://8t3m7ttmbpff::::res://Assets/distance.png
-::res://Scripts/::1780683324
+::res://Scripts/::1781031589
 connection_window.gd::GDScript::7609549482757736638::1778250580::0::1::::<>Window<><>0<>0<><>::
 live_dot.gd::GDScript::8689339355722123539::1780683324::0::1::::<>PanelContainer<><>0<>0<><>::
-main.gd::GDScript::1240246212028182416::1780507091::0::1::::<>Node<><>0<>0<><>::
+main.gd::GDScript::1240246212028182416::1781031589::0::1::::<>Node<><>0<>0<><>::
 surrounding.gd::GDScript::2453976749828338139::1780675687::0::1::::<>TextureRect<><>0<>0<><>::
