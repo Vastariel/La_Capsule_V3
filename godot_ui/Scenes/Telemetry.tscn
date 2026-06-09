@@ -9,20 +9,21 @@
 [ext_resource type="Texture2D" uid="uid://8t3m7ttmbpff" path="res://Assets/distance.png" id="5_8fkpw"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8fkpw"]
-content_margin_left = 20.0
-content_margin_top = 20.0
-content_margin_right = 20.0
-content_margin_bottom = 20.0
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
 bg_color = Color(1, 1, 1, 0)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
 border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+corner_detail = 10
 
 [sub_resource type="FontFile" id="FontFile_b4d12"]
 subpixel_positioning = 0
@@ -95,15 +96,25 @@ layout_mode = 2
 theme = ExtResource("1_wlw6n")
 
 [node name="HeaderRow" type="HBoxContainer" parent="MarginContainer/Content/HeaderVBox" unique_id=2108410548]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 theme = ExtResource("1_wlw6n")
 theme_override_constants/separation = 7
 
-[node name="ColorRect" type="PanelContainer" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1469159345]
-custom_minimum_size = Vector2(10, 10)
+[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1279450488]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=191463066]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
+[node name="ColorRect" type="PanelContainer" parent="MarginContainer/Content/HeaderVBox/HeaderRow/CenterContainer" unique_id=1469159345]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_8fkpw")
 script = ExtResource("2_1l3ks")
+blink_interval = 1.0
 
 [node name="TitleOneLabel" type="Label" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=2017785934]
 layout_mode = 2
@@ -121,13 +132,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 0.5882353)
 theme_override_font_sizes/font_size = 14
 text = "LA CAPSULE · AURORALPES"
 horizontal_alignment = 2
-vertical_alignment = 2
-
-[node name="TitleRightLabel2" type="Label" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1293874452]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.5882353)
-theme_override_font_sizes/font_size = 14
-horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="TextureRect" type="TextureRect" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1026729388]
 modulate = Color(1, 1, 1, 0.5882353)
@@ -135,6 +140,10 @@ layout_mode = 2
 texture = ExtResource("2_or2ii")
 expand_mode = 3
 stretch_mode = 4
+
+[node name="MarginContainer3" type="MarginContainer" parent="MarginContainer/Content/HeaderVBox/HeaderRow" unique_id=1150189683]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
 
 [node name="TopSeparator2" type="ColorRect" parent="MarginContainer/Content/HeaderVBox" unique_id=1470207415]
 custom_minimum_size = Vector2(0, 1)
