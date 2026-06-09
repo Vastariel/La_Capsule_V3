@@ -150,7 +150,7 @@ func _process_message(text: String) -> void:
 	if gforce != null and gforce_label:
 		gforce_label.text = "%.2f" % float(gforce)
 	if pitch != null and pitch_label:
-		pitch_label.text = "%.1f°" % float(pitch)
+		pitch_label.text = "%d" % int(round(pitch))
 
 
 	emit_signal("telemetry_updated", data)
