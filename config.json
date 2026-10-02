@@ -1,6 +1,6 @@
 {
   "krpc": {
-    "host": "192.168.1.31",
+    "host": "192.168.1.21",
     "rpc_port": 50008,
     "stream_port": 50001,
     "reconnect_timeout_s": 5
@@ -22,7 +22,7 @@
       "raspi_ip": "127.0.0.1",
       "use_remote": true,
       "leds_rouges": {
-        "brightness": 0.2,
+        "brightness": 0.05,
         "active_high": true,
         "pins": {
           "24": "STAGE_BOOSTERS",
@@ -32,7 +32,7 @@
         }
       },
       "leds_vertes": {
-        "brightness": 0.1,
+        "brightness": 0.05,
         "active_high": true,
         "pins": {
           "18": "SAS",
@@ -103,23 +103,23 @@
     "calibration": [
       [
         0.0,
-        19
+        18
       ],
       [
         0.25,
-        1403
+        1798
       ],
       [
         0.5,
-        2583
+        2749
       ],
       [
         0.75,
-        3337
+        3408
       ],
       [
         1.0,
-        4094
+        4095
       ]
     ]
   }
