@@ -1,6 +1,6 @@
 {
   "krpc": {
-    "host": "192.168.1.31",
+    "host": "192.168.1.61",
     "rpc_port": 50008,
     "stream_port": 50001,
     "reconnect_timeout_s": 5

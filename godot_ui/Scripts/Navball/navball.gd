@@ -1,7 +1,8 @@
 extends Control
-## Navball façon KSP.
-## Si un serveur kRPC tourne dans KSP (voir le nœud KRPC), la navball suit
-## l'attitude du vaisseau actif. Sinon, contrôles clavier :
+## Navball façon KSP, alimentée par la télémétrie du bridge Python
+## (heading / pitch / roll reçus via WebSocket, voir main.gd → set_attitude).
+##
+## keyboard_fallback = true permet de tester la scène seule, sans KSP :
 ##   Flèches gauche/droite : cap (heading)
 ##   Flèches haut/bas      : tangage (pitch)
 ##   Q / E                 : roulis (roll)
@@ -12,22 +13,25 @@ const SPEED := 60.0        # degrés par seconde
 const SLOW_FACTOR := 0.15
 const ROLL_SIGN := 1.0     # mettre -1.0 si le roulis kRPC est inversé par rapport à KSP
 
+## Désactivé par défaut : les flèches pilotent déjà le menu de la capsule.
+@export var keyboard_fallback := false
+
 var heading := 0.0   # 0..360, 0 = Nord, sens horaire vu de dessus
 var pitch := 0.0     # -90..90, positif = nez vers le haut
 var roll := 0.0      # -180..180, positif = aile droite vers le bas
+var has_attitude := false
 
 @onready var ball: MeshInstance3D = $BallView/SubViewport/Ball
-@onready var info: Label = $Info
-@onready var krpc: Node = $KRPC
 
 
 func _process(delta: float) -> void:
-	if not krpc.has_attitude:
+	if keyboard_fallback and not has_attitude:
 		_process_keyboard(delta)
 	_update_ball()
 
 
-func _on_krpc_attitude(h: float, p: float, r: float) -> void:
+func set_attitude(h: float, p: float, r: float) -> void:
+	has_attitude = true
 	heading = fposmod(h, 360.0)
 	pitch = clampf(p, -90.0, 90.0)
 	roll = wrapf(r * ROLL_SIGN, -180.0, 180.0)
@@ -67,8 +71,3 @@ func _update_ball() -> void:
 	# rotation inverse du vaisseau, conjuguée par ce miroir.
 	var mirror := Basis.from_scale(Vector3(1, 1, -1))
 	ball.basis = mirror * ship.inverse() * mirror
-
-	info.text = "Cap      : %6.1f°\nTangage  : %6.1f°\nRoulis   : %6.1f°\n\n" % [heading, pitch, roll] \
-		+ krpc.status + "\n\n" \
-		+ ("Source : KSP (kRPC)" if krpc.has_attitude \
-			else "Source : clavier\n←/→ : cap\n↑/↓ : tangage\nQ/E : roulis\nShift : précision\nR : reset")

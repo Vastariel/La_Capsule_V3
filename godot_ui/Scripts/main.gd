@@ -36,7 +36,7 @@ var peri_time_label: Label
 var vspeed_value: Label
 var vspeed_arrow: Label
 var gforce_label: Label
-var pitch_label: Label
+var navball: Node
 var heat_temp_label: Label
 var rocket: Node = null
 var _gforce_base_color: Color
@@ -61,7 +61,7 @@ func _cache_ui_nodes():
 	vspeed_value = find_child("VSpeedValue", true, false)
 	vspeed_arrow = find_child("VSpeedArrow", true, false)
 	gforce_label = find_child("GForceValue", true, false)
-	pitch_label = find_child("PitchValue", true, false)
+	navball = find_child("Navball", true, false)
 	heat_temp_label = find_child("HeatTempValue", true, false)
 	if gforce_label:
 		_gforce_base_color = gforce_label.get_theme_color("font_color")
@@ -167,8 +167,10 @@ func _process_message(text: String) -> void:
 	if gforce != null and gforce_label:
 		gforce_label.text = "%.2f" % float(gforce)
 		_apply_alert_color(gforce_label, _gforce_base_color, float(gforce), gforce_warn, gforce_max)
-	if pitch != null and pitch_label:
-		pitch_label.text = "%d" % int(round(pitch))
+	var heading = data.get("heading")
+	var roll = data.get("roll")
+	if navball and pitch != null and heading != null and roll != null:
+		navball.set_attitude(float(heading), float(pitch), float(roll))
 
 
 	emit_signal("telemetry_updated", data)

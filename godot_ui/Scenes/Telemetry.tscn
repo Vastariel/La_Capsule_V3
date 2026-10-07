@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://chjw3qrpnoory" path="res://Assets/outer-circle.png" id="3_or2ii"]
 [ext_resource type="Script" uid="uid://ba7yvyfe5rayd" path="res://Scripts/surrounding.gd" id="4_hhwjn"]
 [ext_resource type="Texture2D" uid="uid://8t3m7ttmbpff" path="res://Assets/distance.png" id="5_8fkpw"]
+[ext_resource type="PackedScene" uid="uid://bfdvo6pfnx2vj" path="res://Scenes/navball.tscn" id="6_navbl"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8fkpw"]
 content_margin_left = 10.0
@@ -341,18 +342,16 @@ theme = ExtResource("1_wlw6n")
 alignment = 1
 
 [node name="PitchHeader" type="Label" parent="MarginContainer/Content/GaugesRow/PitchPanel/PitchVBox" unique_id=769476093]
+visible = false
 layout_mode = 2
 theme = ExtResource("1_wlw6n")
-text = "PITCH"
+text = "ATTITUDE"
 horizontal_alignment = 1
 
-[node name="PitchValue" type="Label" parent="MarginContainer/Content/GaugesRow/PitchPanel/PitchVBox" unique_id=156346178]
+[node name="Navball" parent="MarginContainer/Content/GaugesRow/PitchPanel/PitchVBox" unique_id=156346178 instance=ExtResource("6_navbl")]
+custom_minimum_size = Vector2(140, 140)
 layout_mode = 2
-theme = ExtResource("1_wlw6n")
-theme_type_variation = &"LabelDigit"
-text = "0"
-horizontal_alignment = 1
-clip_text = true
+size_flags_horizontal = 4
 
 [node name="ShieldPanel" type="PanelContainer" parent="MarginContainer/Content/GaugesRow" unique_id=537928333]
 layout_mode = 2
