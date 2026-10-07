@@ -1,0 +1,85 @@
+[gd_scene format=3 uid="uid://bfdvo6pfnx2vj"]
+
+[ext_resource type="Script" uid="uid://431svsacgfag" path="res://Scripts/Navball/navball.gd" id="1_lquwl"]
+[ext_resource type="Texture2D" uid="uid://dlok7o0uliquq" path="res://Assets/Navball/navball.png" id="2_7mycd"]
+[ext_resource type="ArrayMesh" path="res://Assets/Navball/navball_mesh.res" id="3_272bh"]
+[ext_resource type="Script" uid="uid://c6r7f4fyiex6m" path="res://Scripts/Navball/navball_overlay.gd" id="4_5vw27"]
+[ext_resource type="Script" uid="uid://djk2yulbdkqdw" path="res://Scripts/Navball/krpc_client.gd" id="5_kek77"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4c57u"]
+cull_mode = 2
+shading_mode = 0
+albedo_texture = ExtResource("2_7mycd")
+texture_filter = 5
+
+[node name="Main" type="Control" unique_id=233663104]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lquwl")
+
+[node name="Background" type="ColorRect" parent="." unique_id=957396312]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.09, 0.1, 0.12, 1)
+
+[node name="BallView" type="SubViewportContainer" parent="." unique_id=890567140]
+custom_minimum_size = Vector2(500, 500)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="BallView" unique_id=545614093]
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+msaa_3d = 2
+size = Vector2i(500, 500)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="BallView/SubViewport" unique_id=1512212541]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
+projection = 1
+size = 2.1
+
+[node name="Ball" type="MeshInstance3D" parent="BallView/SubViewport" unique_id=52338669]
+material_override = SubResource("StandardMaterial3D_4c57u")
+mesh = ExtResource("3_272bh")
+
+[node name="Overlay" type="Control" parent="." unique_id=1752666034]
+custom_minimum_size = Vector2(500, 500)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_5vw27")
+
+[node name="Info" type="Label" parent="." unique_id=1455365178]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 20.0
+offset_bottom = 20.0
+
+[node name="KRPC" type="Node" parent="." unique_id=1739345665]
+script = ExtResource("5_kek77")
+
+[connection signal="attitude_received" from="KRPC" to="." method="_on_krpc_attitude"]
