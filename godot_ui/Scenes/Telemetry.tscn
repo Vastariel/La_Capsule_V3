@@ -3,7 +3,7 @@
 [ext_resource type="Theme" uid="uid://oid7ghbseeuq" path="res://Assets/theme_default.tres" id="1_wlw6n"]
 [ext_resource type="Script" uid="uid://dv2gfdaisu0hb" path="res://Scripts/live_dot.gd" id="2_1l3ks"]
 [ext_resource type="Texture2D" uid="uid://baoerg0fxq1ai" path="res://Assets/inner_circle.png" id="2_b4d12"]
-[ext_resource type="Texture2D" uid="uid://b8ufj58xareq7" path="res://Assets/Logotype filaire-01.png" id="2_or2ii"]
+[ext_resource type="Texture2D" uid="uid://c5skfshjg2ebs" path="res://Assets/Logotype filaire-01.png" id="2_or2ii"]
 [ext_resource type="Texture2D" uid="uid://chjw3qrpnoory" path="res://Assets/outer-circle.png" id="3_or2ii"]
 [ext_resource type="Script" uid="uid://ba7yvyfe5rayd" path="res://Scripts/surrounding.gd" id="4_hhwjn"]
 [ext_resource type="Texture2D" uid="uid://8t3m7ttmbpff" path="res://Assets/distance.png" id="5_8fkpw"]
