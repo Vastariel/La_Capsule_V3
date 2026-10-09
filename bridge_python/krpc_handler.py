@@ -78,6 +78,10 @@ class KRPCHandler:
             "engines_active": False,
         }
         self._heat_counter = 0
+        # Streams skin_temperature (un par pièce), gérés uniquement par le
+        # thread heat_poll. Reconstruits quand le vaisseau ou le stage change.
+        self._heat_streams: list = []
+        self._heat_key = None
 
         self.sas_state = False
         self.rcs_state = False
@@ -289,10 +293,43 @@ class KRPCHandler:
             self.telemetry["heat_shield_temp"] = temp
 
     def _poll_heat_shield_temp(self) -> float:
+        """Température de peau max (K) sur toutes les pièces du vaisseau.
+
+        Un stream par pièce plutôt qu'un appel RPC par pièce à chaque relevé :
+        la lecture d'un stream est locale (valeur en cache), seule la
+        construction coûte des RPC. On la refait quand le stage change
+        (pièces larguées) ou que le vaisseau change.
+        """
+        with self._lock:
+            vessel = self.vessel
+            key = (id(self.connection), vessel, self.telemetry.get("current_stage"))
         try:
-            return max(p.skin_temperature for p in self.vessel.parts.all)
+            if key != self._heat_key or not self._heat_streams:
+                self._open_heat_streams(vessel)
+                self._heat_key = key
+            return max(st() for st in self._heat_streams)
         except Exception:
+            # Pièce détruite, scène changée… : on reconstruira au prochain relevé.
+            self._close_heat_streams()
             return 0.0
+
+    def _open_heat_streams(self, vessel) -> None:
+        self._close_heat_streams()
+        streams = []
+        for part in vessel.parts.all:
+            st = self.connection.add_stream(getattr, part, "skin_temperature")
+            st.rate = 1.0
+            streams.append(st)
+        self._heat_streams = streams
+
+    def _close_heat_streams(self) -> None:
+        for st in self._heat_streams:
+            try:
+                st.remove()
+            except Exception:
+                pass
+        self._heat_streams = []
+        self._heat_key = None
 
     def get_telemetry(self) -> Dict:
         with self._lock:
