@@ -263,6 +263,13 @@ class KRPCHandler:
             if self._heat_counter >= 20:
                 self._heat_counter = 0
                 self._executor.submit(self._async_update_heat)
+                # kRPC lie un Orbit à l'objet Orbit interne de KSP (pas au
+                # vaisseau) : après un revert il reste figé sur l'ancien.
+                # On compare à l'orbite courante et on rebinde si elle a changé.
+                if self.vessel.orbit != orbit:
+                    print("[KRPC] Orbite remplacée (revert ?) → rebind streams")
+                    with self._lock:
+                        self._bind_vessel()
 
             # Lock court : écriture atomique du dict partagé.
             with self._lock:

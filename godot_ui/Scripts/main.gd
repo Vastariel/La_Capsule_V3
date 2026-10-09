@@ -10,6 +10,15 @@ extends Node
 @export var reconnect_delay: float = 2.0
 @export var fallback_delay: float = 5.0
 
+# Alertes couleur : la valeur vire progressivement de sa couleur normale
+# (thème) vers l'ambre puis le rouge entre *_warn et *_max.
+@export var gforce_warn: float = 4.0
+@export var gforce_max: float = 7.0
+@export var heat_warn_c: float = 1200.0
+@export var heat_max_c: float = 1700.0
+@export var alert_mid_color: Color = Color(1.0, 0.6, 0.1)
+@export var alert_max_color: Color = Color(1.0, 0.1, 0.1)
+
 signal telemetry_updated(data)
 
 var ws: WebSocketPeer
@@ -30,6 +39,8 @@ var gforce_label: Label
 var pitch_label: Label
 var heat_temp_label: Label
 var rocket: Node = null
+var _gforce_base_color: Color
+var _heat_base_color: Color
 
 
 func _ready():
@@ -52,6 +63,10 @@ func _cache_ui_nodes():
 	gforce_label = find_child("GForceValue", true, false)
 	pitch_label = find_child("PitchValue", true, false)
 	heat_temp_label = find_child("HeatTempValue", true, false)
+	if gforce_label:
+		_gforce_base_color = gforce_label.get_theme_color("font_color")
+	if heat_temp_label:
+		_heat_base_color = heat_temp_label.get_theme_color("font_color")
 
 func _process(delta):
 	if not connected and _reconnect_time > 0.0:
@@ -146,14 +161,27 @@ func _process_message(text: String) -> void:
 
 	var heat_temp = data.get("heat_shield_temp")
 	if heat_temp != null and heat_temp_label:
-		heat_temp_label.text = "%d" % int(float(heat_temp) - 273.15)
+		var heat_c := float(heat_temp) - 273.15
+		heat_temp_label.text = "%d" % int(heat_c)
+		_apply_alert_color(heat_temp_label, _heat_base_color, heat_c, heat_warn_c, heat_max_c)
 	if gforce != null and gforce_label:
 		gforce_label.text = "%.2f" % float(gforce)
+		_apply_alert_color(gforce_label, _gforce_base_color, float(gforce), gforce_warn, gforce_max)
 	if pitch != null and pitch_label:
 		pitch_label.text = "%d" % int(round(float(pitch)))
 
 
 	emit_signal("telemetry_updated", data)
+
+# Normal sous warn, base → ambre → rouge entre warn et max, rouge au-delà.
+func _apply_alert_color(label: Label, base: Color, value: float, warn: float, max_v: float) -> void:
+	var t := clampf(inverse_lerp(warn, max_v, value), 0.0, 1.0)
+	var c: Color
+	if t < 0.5:
+		c = base.lerp(alert_mid_color, t * 2.0)
+	else:
+		c = alert_mid_color.lerp(alert_max_color, (t - 0.5) * 2.0)
+	label.add_theme_color_override("font_color", c)
 
 func _format_speed(s) -> String:
 	return "%.0f" % (float(s))
