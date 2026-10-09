@@ -73,7 +73,8 @@ class KRPCHandler:
             "periapsis": 0.0,
             "time_to_apoapsis": 0.0,
             "time_to_periapsis": 0.0,
-            "heat_shield_temp": 0.0,
+            # None = pas encore de mesure (Godot garde alors l'affichage courant).
+            "heat_shield_temp": None,
             "current_stage": -1,
             "engines_active": False,
         }
@@ -289,10 +290,12 @@ class KRPCHandler:
 
     def _async_update_heat(self) -> None:
         temp = self._poll_heat_shield_temp()
+        if temp is None:
+            return  # échec ponctuel : on garde la dernière valeur connue
         with self._lock:
             self.telemetry["heat_shield_temp"] = temp
 
-    def _poll_heat_shield_temp(self) -> float:
+    def _poll_heat_shield_temp(self) -> Optional[float]:
         """Température de peau max (K) sur toutes les pièces du vaisseau.
 
         Un stream par pièce plutôt qu'un appel RPC par pièce à chaque relevé :
@@ -307,20 +310,27 @@ class KRPCHandler:
             if key != self._heat_key or not self._heat_streams:
                 self._open_heat_streams(vessel)
                 self._heat_key = key
-            return max(st() for st in self._heat_streams)
-        except Exception:
+            temp = max(st() for st in self._heat_streams)
+        except Exception as e:
             # Pièce détruite, scène changée… : on reconstruira au prochain relevé.
+            print(f"[KRPC] Température indisponible ({type(e).__name__}: {e}) → rebuild")
             self._close_heat_streams()
-            return 0.0
+            return None
+        # 0 K = pièce pas encore initialisée par KSP (chargement de scène).
+        return temp if temp > 0.0 else None
 
     def _open_heat_streams(self, vessel) -> None:
         self._close_heat_streams()
         streams = []
         for part in vessel.parts.all:
             st = self.connection.add_stream(getattr, part, "skin_temperature")
-            st.rate = 1.0
+            try:
+                st.rate = 1.0
+            except Exception:
+                pass
             streams.append(st)
         self._heat_streams = streams
+        print(f"[KRPC] {len(streams)} streams température ouverts")
 
     def _close_heat_streams(self) -> None:
         for st in self._heat_streams:
