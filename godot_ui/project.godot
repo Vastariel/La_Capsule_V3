@@ -24,7 +24,7 @@ run/max_fps=30
 config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.039215688, 0.05882353, 0.10980392, 1)
 boot_splash/stretch_mode=5
-boot_splash/image="uid://b8ufj58xareq7"
+boot_splash/image="res://Assets/Logotype filaire-01.png"
 
 [display]
 

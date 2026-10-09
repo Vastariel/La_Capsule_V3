@@ -36,6 +36,10 @@ STREAM_RATES_HZ: Dict[str, float] = {
 }
 
 
+# Module KSP porté par les boucliers thermiques (ablateur).
+HEAT_SHIELD_MODULE = "ModuleAblator"
+
+
 class KRPCHandler:
     """Connexion kRPC avec reconnexion automatique et télémétrie."""
 
@@ -77,11 +81,23 @@ class KRPCHandler:
             "periapsis": 0.0,
             "time_to_apoapsis": 0.0,
             "time_to_periapsis": 0.0,
-            "heat_shield_temp": 0.0,
+            # Température affichée dans le panneau bouclier (K), et sa source :
+            #   "shield"  : bouclier attaché, température de peau mesurée
+            #   "ambient" : bouclier pas (encore) mesurable ou absent du
+            #               vaisseau → température de l'air ambiant
+            #   "none"    : bouclier largué → plus rien jusqu'au relancement
+            # None = pas encore de mesure (Godot garde l'affichage courant).
+            "heat_shield_temp": None,
+            "heat_source": None,
             "current_stage": -1,
             "engines_active": False,
         }
         self._heat_counter = 0
+        # État du bouclier pour la mission en cours, remis à zéro à chaque
+        # (re)bind du vaisseau. _heat_gen invalide un relevé lancé avant.
+        self._shield_parts: Optional[list] = None   # None = pas encore cherché
+        self._shield_gone = False
+        self._heat_gen = 0
 
         self.sas_state = False
         self.rcs_state = False
@@ -129,6 +145,11 @@ class KRPCHandler:
         self.orbit = self.vessel.orbit
         self.camera = self.space_center.camera
         self._vessel_id = id(self.vessel)
+        self._shield_parts = None
+        self._shield_gone = False
+        self._heat_gen += 1
+        self.telemetry["heat_shield_temp"] = None
+        self.telemetry["heat_source"] = None
         self._open_streams()
 
     def _open_streams(self) -> None:
@@ -294,15 +315,65 @@ class KRPCHandler:
                 self._close_streams()
 
     def _async_update_heat(self) -> None:
-        temp = self._poll_heat_shield_temp()
         with self._lock:
+            gen = self._heat_gen
+            vessel, flight = self.vessel, self.flight
+        try:
+            source, temp = self._poll_heat(vessel, flight)
+        except Exception as e:
+            print(f"[KRPC] Température indisponible ({type(e).__name__}: {e})")
+            return  # échec ponctuel : on garde la dernière valeur connue
+        with self._lock:
+            if gen != self._heat_gen:
+                # Vaisseau changé pendant le relevé : résultat obsolète, et
+                # l'état bouclier a pu être réécrit après le reset du bind.
+                self._shield_parts = None
+                self._shield_gone = False
+                return
+            if source == "ambient" and temp is None:
+                return  # rien de mesurable : on garde l'affichage courant
+            self.telemetry["heat_source"] = source
             self.telemetry["heat_shield_temp"] = temp
 
-    def _poll_heat_shield_temp(self) -> float:
-        try:
-            return max(p.skin_temperature for p in self.vessel.parts.all)
-        except Exception:
-            return 0.0
+    def _poll_heat(self, vessel, flight):
+        """Renvoie (source, température K) pour le panneau bouclier.
+
+        Priorité : température de peau du bouclier s'il est attaché et
+        mesurable, sinon température de l'air ambiant. Une fois le bouclier
+        largué, plus rien (source "none") jusqu'au prochain bind du vaisseau.
+        Coût : ~2 RPC par bouclier + 1 RPC par relevé, au lieu d'un par pièce.
+        """
+        if self._shield_parts is None:
+            modules = vessel.parts.modules_with_name(HEAT_SHIELD_MODULE)
+            self._shield_parts = [m.part for m in modules]
+            print(f"[KRPC] {len(self._shield_parts)} bouclier(s) thermique(s) détecté(s)")
+
+        if self._shield_gone:
+            return "none", None
+
+        if self._shield_parts:
+            temps = []
+            attached = False
+            for part in self._shield_parts:
+                try:
+                    if part.vessel != vessel:
+                        continue  # largué : appartient à un autre vaisseau
+                    attached = True
+                    t = part.skin_temperature
+                    if t > 0.0:
+                        temps.append(t)
+                except Exception:
+                    continue  # pièce détruite
+            if not attached:
+                self._shield_gone = True
+                print("[KRPC] Bouclier largué → température masquée")
+                return "none", None
+            if temps:
+                return "shield", max(temps)
+
+        # Pas de bouclier sur ce vaisseau, ou pas encore mesurable (0 K).
+        ambient = flight.static_air_temperature
+        return "ambient", (ambient if ambient > 0.0 else None)
 
     def get_telemetry(self) -> Dict:
         with self._lock:

@@ -14,6 +14,7 @@ BRIDGE="/home/capsule/Desktop/La_Capsule_V3/bridge_python/main.py"
 GODOT_APP="/home/capsule/Desktop/La_Capsule_V3/capsule.arm64"
 WORKDIR="$(dirname "$BRIDGE")"
 BRIDGE_PIDFILE="/tmp/capsule_bridge.pid"
+BRIDGE_LOG="/tmp/capsule_bridge.log"
 
 # Écran : rotation attendue (90° horaire = transform 270) sur la sortie HDMI.
 SCREEN_OUTPUT="HDMI-A-1"
@@ -90,9 +91,11 @@ cd "$WORKDIR" || exit 1
 # (echo $$ avant le exec : le shell devient python, donc le PID reste valide)
 # afin que la surveillance plus bas puisse suivre le vrai bridge et pas la
 # fenêtre du terminal (lxterminal réutilise un démon, son PID n'est pas fiable).
+# La sortie est aussi copiée dans BRIDGE_LOG (lisible en SSH avec tail -f) ;
+# python3 -u évite que les logs restent bloqués dans le tampon.
 rm -f "$BRIDGE_PIDFILE"
 lxterminal --no-remote --title="La Capsule — bridge" \
-    -e bash -c "echo \$\$ > '$BRIDGE_PIDFILE'; exec python3 '$BRIDGE'" &
+    -e bash -c "echo \$\$ > '$BRIDGE_PIDFILE'; exec > >(tee '$BRIDGE_LOG') 2>&1; exec python3 -u '$BRIDGE'" &
 
 # On attend que le bridge ait écrit son PID (max ~5 s).
 for _ in $(seq 1 50); do

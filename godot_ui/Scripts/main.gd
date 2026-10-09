@@ -38,6 +38,7 @@ var vspeed_arrow: Label
 var gforce_label: Label
 var navball: Node
 var heat_temp_label: Label
+var heat_header_label: Label
 var rocket: Node = null
 var _gforce_base_color: Color
 var _heat_base_color: Color
@@ -63,6 +64,7 @@ func _cache_ui_nodes():
 	gforce_label = find_child("GForceValue", true, false)
 	navball = find_child("Navball", true, false)
 	heat_temp_label = find_child("HeatTempValue", true, false)
+	heat_header_label = find_child("ShieldHeader", true, false)
 	if gforce_label:
 		_gforce_base_color = gforce_label.get_theme_color("font_color")
 	if heat_temp_label:
@@ -159,11 +161,7 @@ func _process_message(text: String) -> void:
 	if peri_time != null and peri_time_label:
 		peri_time_label.text = _format_time(float(peri_time))
 
-	var heat_temp = data.get("heat_shield_temp")
-	if heat_temp != null and heat_temp_label:
-		var heat_c := float(heat_temp) - 273.15
-		heat_temp_label.text = "%d" % int(heat_c)
-		_apply_alert_color(heat_temp_label, _heat_base_color, heat_c, heat_warn_c, heat_max_c)
+	_update_heat(data.get("heat_source"), data.get("heat_shield_temp"))
 	if gforce != null and gforce_label:
 		gforce_label.text = "%.2f" % float(gforce)
 		_apply_alert_color(gforce_label, _gforce_base_color, float(gforce), gforce_warn, gforce_max)
@@ -174,6 +172,27 @@ func _process_message(text: String) -> void:
 
 
 	emit_signal("telemetry_updated", data)
+
+# Panneau bouclier selon la source envoyée par le bridge :
+#   "shield"  → température du bouclier, avec alerte couleur
+#   "ambient" → température de l'air, en-tête "AMBIANT", sans alerte
+#   "none"    → bouclier largué : valeur masquée jusqu'au relancement
+# Source absente (pas encore de mesure) : on garde l'affichage courant.
+func _update_heat(source, temp) -> void:
+	if heat_temp_label == null or source == null:
+		return
+	if heat_header_label:
+		heat_header_label.text = "AMBIANT (°C)" if source == "ambient" else "BOUCLIER (°C)"
+	if source == "none" or temp == null:
+		heat_temp_label.text = "----"
+		heat_temp_label.add_theme_color_override("font_color", _heat_base_color)
+		return
+	var heat_c := float(temp) - 273.15
+	heat_temp_label.text = "%d" % int(heat_c)
+	if source == "shield":
+		_apply_alert_color(heat_temp_label, _heat_base_color, heat_c, heat_warn_c, heat_max_c)
+	else:
+		heat_temp_label.add_theme_color_override("font_color", _heat_base_color)
 
 # Normal sous warn, base → ambre → rouge entre warn et max, rouge au-delà.
 func _apply_alert_color(label: Label, base: Color, value: float, warn: float, max_v: float) -> void:
