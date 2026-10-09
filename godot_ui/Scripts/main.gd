@@ -169,6 +169,8 @@ func _process_message(text: String) -> void:
 	var roll = data.get("roll")
 	if navball and pitch != null and heading != null and roll != null:
 		navball.set_attitude(float(heading), float(pitch), float(roll))
+	if navball and data.has("prograde"):
+		navball.set_prograde(data.get("prograde"))
 
 
 	emit_signal("telemetry_updated", data)

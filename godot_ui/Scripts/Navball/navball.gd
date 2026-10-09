@@ -23,6 +23,8 @@ var heading := 0.0   # 0..360, 0 = Nord, sens horaire vu de dessus
 var pitch := 0.0     # -90..90, positif = nez vers le haut
 var roll := 0.0      # -180..180, positif = aile droite vers le bas
 var has_attitude := false
+# Direction prograde (repère monde : Nord = -Z, Est = +X, Haut = +Y), ou null.
+var _prograde_dir: Variant = null
 
 # Le rendu 3D de la boule ne se fait que quand son orientation change
 # (UPDATE_ONCE) : une navball immobile ne coûte rien au GPU.
@@ -31,6 +33,7 @@ var _dirty := true
 
 @onready var ball: MeshInstance3D = $BallView/SubViewport/Ball
 @onready var viewport: SubViewport = $BallView/SubViewport
+@onready var overlay: Control = $Overlay
 
 
 func _notification(what: int) -> void:
@@ -42,6 +45,7 @@ func _process(delta: float) -> void:
 	if keyboard_fallback and not has_attitude:
 		_process_keyboard(delta)
 	_update_ball(delta)
+	_update_markers()
 
 
 func set_attitude(h: float, p: float, r: float) -> void:
@@ -49,6 +53,16 @@ func set_attitude(h: float, p: float, r: float) -> void:
 	heading = fposmod(h, 360.0)
 	pitch = clampf(p, -90.0, 90.0)
 	roll = wrapf(r * ROLL_SIGN, -180.0, 180.0)
+
+
+## Direction du vecteur vitesse (cap / tangage en degrés). null = masquer.
+func set_prograde(data: Variant) -> void:
+	if typeof(data) != TYPE_DICTIONARY:
+		_prograde_dir = null
+		return
+	var h := deg_to_rad(float(data.get("heading", 0.0)))
+	var p := deg_to_rad(float(data.get("pitch", 0.0)))
+	_prograde_dir = Vector3(cos(p) * sin(h), sin(p), -cos(p) * cos(h))
 
 
 func _process_keyboard(delta: float) -> void:
@@ -106,3 +120,19 @@ func _set_orientation(q: Quaternion) -> void:
 	_current = q
 	ball.quaternion = q
 	_dirty = true
+
+
+# Position écran d'une direction du ciel sur la boule, telle que rendue :
+# sommet du maillage = miroir(direction), puis rotation courante de la boule.
+# Renvoie Vector3(x, y, profondeur) en unités de rayon (x à droite, y en bas) ;
+# profondeur > 0 = face visible.
+func _project(dir: Vector3) -> Vector3:
+	var r := Basis(_current) * Vector3(dir.x, dir.y, -dir.z)
+	return Vector3(r.x, -r.y, r.z)
+
+
+func _update_markers() -> void:
+	if _prograde_dir == null:
+		overlay.set_markers(null, null)
+	else:
+		overlay.set_markers(_project(_prograde_dir), _project(-_prograde_dir))

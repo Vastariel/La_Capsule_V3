@@ -8,6 +8,7 @@ les commandes (SAS, RCS, throttle, action groups, caméra).
 """
 
 import concurrent.futures
+import math
 import threading
 import time
 from typing import Callable, Dict, Optional
@@ -28,6 +29,8 @@ STREAM_RATES_HZ: Dict[str, float] = {
     "pitch": 20.0,
     "heading": 20.0,
     "roll": 20.0,
+    "vel_surface": 20.0,
+    "vel_orbit": 20.0,
     "current_stage": 5.0,
     "apoapsis": 5.0,
     "periapsis": 5.0,
@@ -35,6 +38,12 @@ STREAM_RATES_HZ: Dict[str, float] = {
     "time_to_periapsis": 1.0,
 }
 
+
+# Navball : en dessous de cette altitude, prograde/rétrograde sont relatifs à
+# la surface, au-dessus à l'orbite (bascule automatique de KSP, ~36 km sur Kerbin).
+NAVBALL_ORBIT_ALT_M = 36000.0
+# Sous cette vitesse, la direction prograde n'a pas de sens (vaisseau posé).
+PROGRADE_MIN_SPEED = 0.5
 
 # Module KSP porté par les boucliers thermiques (ablateur).
 HEAT_SHIELD_MODULE = "ModuleAblator"
@@ -65,6 +74,8 @@ class KRPCHandler:
         self.control = None
         self.flight = None
         self.flight_surface = None
+        self.flight_vel_surface = None
+        self.flight_vel_orbit = None
         self.orbit = None
         self.camera = None
         self.space_center = None
@@ -77,6 +88,9 @@ class KRPCHandler:
             "pitch": 0.0,
             "heading": 0.0,
             "roll": 0.0,
+            # Direction du vecteur vitesse pour la navball :
+            # {"mode": "surface"|"orbit", "heading": °, "pitch": °} ou None.
+            "prograde": None,
             "apoapsis": 0.0,
             "periapsis": 0.0,
             "time_to_apoapsis": 0.0,
@@ -142,6 +156,15 @@ class KRPCHandler:
         # Flight séparé sur le référentiel de surface : c'est le seul qui donne
         # le pitch/heading/roll tels qu'affichés sur la navball (90° = vertical).
         self.flight_surface = self.vessel.flight(self.vessel.surface_reference_frame)
+        # Vitesse exprimée sur les axes surface (x = haut, y = nord, z = est),
+        # relative à la surface qui tourne ou à l'espace inertiel.
+        body = self.vessel.orbit.body
+        RF = self.space_center.ReferenceFrame
+        surf = self.vessel.surface_reference_frame
+        self.flight_vel_surface = self.vessel.flight(
+            RF.create_hybrid(position=body.reference_frame, rotation=surf))
+        self.flight_vel_orbit = self.vessel.flight(
+            RF.create_hybrid(position=body.non_rotating_reference_frame, rotation=surf))
         self.orbit = self.vessel.orbit
         self.camera = self.space_center.camera
         self._vessel_id = id(self.vessel)
@@ -169,6 +192,8 @@ class KRPCHandler:
                 "pitch": c.add_stream(getattr, self.flight_surface, "pitch"),
                 "heading": c.add_stream(getattr, self.flight_surface, "heading"),
                 "roll": c.add_stream(getattr, self.flight_surface, "roll"),
+                "vel_surface": c.add_stream(getattr, self.flight_vel_surface, "velocity"),
+                "vel_orbit": c.add_stream(getattr, self.flight_vel_orbit, "velocity"),
                 "apoapsis": c.add_stream(getattr, self.orbit, "apoapsis_altitude"),
                 "periapsis": c.add_stream(getattr, self.orbit, "periapsis_altitude"),
                 "time_to_apoapsis": c.add_stream(getattr, self.orbit, "time_to_apoapsis"),
@@ -256,6 +281,8 @@ class KRPCHandler:
             streams = self._streams
             flight, orbit, control = self.flight, self.orbit, self.control
             flight_surface = self.flight_surface
+            flight_vel_surface = self.flight_vel_surface
+            flight_vel_orbit = self.flight_vel_orbit
 
         # Lectures réseau sans lock : get_telemetry() reste libre pendant ce temps.
         try:
@@ -268,6 +295,8 @@ class KRPCHandler:
                 new_vals["pitch"]             = streams["pitch"]()
                 new_vals["heading"]           = streams["heading"]()
                 new_vals["roll"]              = streams["roll"]()
+                vel_surface                   = streams["vel_surface"]()
+                vel_orbit                     = streams["vel_orbit"]()
                 new_vals["apoapsis"]          = streams["apoapsis"]()
                 new_vals["periapsis"]         = streams["periapsis"]()
                 new_vals["time_to_apoapsis"]  = streams["time_to_apoapsis"]()
@@ -283,12 +312,19 @@ class KRPCHandler:
                 new_vals["pitch"]             = flight_surface.pitch
                 new_vals["heading"]           = flight_surface.heading
                 new_vals["roll"]              = flight_surface.roll
+                vel_surface                   = flight_vel_surface.velocity
+                vel_orbit                     = flight_vel_orbit.velocity
                 new_vals["apoapsis"]          = orbit.apoapsis_altitude
                 new_vals["periapsis"]         = orbit.periapsis_altitude
                 new_vals["time_to_apoapsis"]  = orbit.time_to_apoapsis
                 new_vals["time_to_periapsis"] = orbit.time_to_periapsis
                 new_stage                     = control.current_stage
                 new_vals["engines_active"]    = control.throttle > 0.0
+
+            if new_vals["altitude"] < NAVBALL_ORBIT_ALT_M:
+                new_vals["prograde"] = _direction("surface", vel_surface)
+            else:
+                new_vals["prograde"] = _direction("orbit", vel_orbit)
 
             self._heat_counter += 1
             if self._heat_counter >= 20:
@@ -442,3 +478,17 @@ class KRPCHandler:
                 print("[KSP] Caméra: CARTE")
         except Exception as e:
             print(f"[KRPC] Erreur caméra: {e}")
+
+
+def _direction(mode: str, v) -> Optional[Dict]:
+    """Cap/tangage (°) d'un vecteur exprimé sur les axes surface kRPC
+    (x = haut, y = nord, z = est). None si la vitesse est trop faible."""
+    up, north, east = v
+    n = math.sqrt(up * up + north * north + east * east)
+    if n < PROGRADE_MIN_SPEED:
+        return None
+    return {
+        "mode": mode,
+        "heading": math.degrees(math.atan2(east, north)) % 360.0,
+        "pitch": math.degrees(math.asin(max(-1.0, min(1.0, up / n)))),
+    }
