@@ -34,9 +34,8 @@ STREAM_RATES_HZ: Dict[str, float] = {
 }
 
 
-# Reconstruction périodique des streams de température, par sécurité contre
-# des streams qui resteraient figés sur des pièces obsolètes.
-HEAT_REBUILD_S = 10.0
+# Module KSP porté par les boucliers thermiques (ablateur).
+HEAT_SHIELD_MODULE = "ModuleAblator"
 
 
 class KRPCHandler:
@@ -78,18 +77,23 @@ class KRPCHandler:
             "periapsis": 0.0,
             "time_to_apoapsis": 0.0,
             "time_to_periapsis": 0.0,
-            # None = pas encore de mesure (Godot garde alors l'affichage courant).
+            # Température affichée dans le panneau bouclier (K), et sa source :
+            #   "shield"  : bouclier attaché, température de peau mesurée
+            #   "ambient" : bouclier pas (encore) mesurable ou absent du
+            #               vaisseau → température de l'air ambiant
+            #   "none"    : bouclier largué → plus rien jusqu'au relancement
+            # None = pas encore de mesure (Godot garde l'affichage courant).
             "heat_shield_temp": None,
+            "heat_source": None,
             "current_stage": -1,
             "engines_active": False,
         }
         self._heat_counter = 0
-        # Streams skin_temperature (un par pièce), gérés uniquement par le
-        # thread heat_poll. Reconstruits quand le vaisseau ou le stage change.
-        self._heat_streams: list = []
-        self._heat_key = None
-        self._heat_built_at = 0.0
-        self._heat_last_count = -1
+        # État du bouclier pour la mission en cours, remis à zéro à chaque
+        # (re)bind du vaisseau. _heat_gen invalide un relevé lancé avant.
+        self._shield_parts: Optional[list] = None   # None = pas encore cherché
+        self._shield_gone = False
+        self._heat_gen = 0
 
         self.sas_state = False
         self.rcs_state = False
@@ -137,6 +141,11 @@ class KRPCHandler:
         self.orbit = self.vessel.orbit
         self.camera = self.space_center.camera
         self._vessel_id = id(self.vessel)
+        self._shield_parts = None
+        self._shield_gone = False
+        self._heat_gen += 1
+        self.telemetry["heat_shield_temp"] = None
+        self.telemetry["heat_source"] = None
         self._open_streams()
 
     def _open_streams(self) -> None:
@@ -296,78 +305,65 @@ class KRPCHandler:
                 self._close_streams()
 
     def _async_update_heat(self) -> None:
-        temp = self._poll_heat_shield_temp()
-        if temp is None:
+        with self._lock:
+            gen = self._heat_gen
+            vessel, flight = self.vessel, self.flight
+        try:
+            source, temp = self._poll_heat(vessel, flight)
+        except Exception as e:
+            print(f"[KRPC] Température indisponible ({type(e).__name__}: {e})")
             return  # échec ponctuel : on garde la dernière valeur connue
         with self._lock:
+            if gen != self._heat_gen:
+                # Vaisseau changé pendant le relevé : résultat obsolète, et
+                # l'état bouclier a pu être réécrit après le reset du bind.
+                self._shield_parts = None
+                self._shield_gone = False
+                return
+            if source == "ambient" and temp is None:
+                return  # rien de mesurable : on garde l'affichage courant
+            self.telemetry["heat_source"] = source
             self.telemetry["heat_shield_temp"] = temp
 
-    def _poll_heat_shield_temp(self) -> Optional[float]:
-        """Température de peau max (K) sur toutes les pièces du vaisseau.
+    def _poll_heat(self, vessel, flight):
+        """Renvoie (source, température K) pour le panneau bouclier.
 
-        Un stream par pièce plutôt qu'un appel RPC par pièce à chaque relevé :
-        la lecture d'un stream est locale (valeur en cache), seule la
-        construction coûte des RPC. On la refait quand le stage ou le vaisseau
-        change, quand des pièces ont disparu, quand aucune mesure n'est
-        valide (0 K) et au plus tard toutes les HEAT_REBUILD_S secondes.
+        Priorité : température de peau du bouclier s'il est attaché et
+        mesurable, sinon température de l'air ambiant. Une fois le bouclier
+        largué, plus rien (source "none") jusqu'au prochain bind du vaisseau.
+        Coût : ~2 RPC par bouclier + 1 RPC par relevé, au lieu d'un par pièce.
         """
-        with self._lock:
-            vessel = self.vessel
-            key = (id(self.connection), vessel, self.telemetry.get("current_stage"))
-        try:
-            if (key != self._heat_key or not self._heat_streams
-                    or time.time() - self._heat_built_at > HEAT_REBUILD_S):
-                self._open_heat_streams(vessel)
-                self._heat_key = key
-        except Exception as e:
-            print(f"[KRPC] Streams température impossibles ({type(e).__name__}: {e})")
-            self._close_heat_streams()
-            return None
+        if self._shield_parts is None:
+            modules = vessel.parts.modules_with_name(HEAT_SHIELD_MODULE)
+            self._shield_parts = [m.part for m in modules]
+            print(f"[KRPC] {len(self._shield_parts)} bouclier(s) thermique(s) détecté(s)")
 
-        # Lecture pièce par pièce : une pièce détruite (largage, crash) ne doit
-        # pas invalider les autres. On l'écarte et on reconstruit au prochain relevé.
-        temps = []
-        lost = False
-        for st in self._heat_streams:
-            try:
-                temps.append(st())
-            except Exception:
-                lost = True
-        if lost:
-            self._heat_key = None
+        if self._shield_gone:
+            return "none", None
 
-        temp = max(temps, default=0.0)
-        if temp <= 0.0:
-            # 0 K = mesure pas encore valide (vaisseau détruit, pièces pas
-            # initialisées…) : on retente avec des streams neufs.
-            self._heat_key = None
-            return None
-        return temp
+        if self._shield_parts:
+            temps = []
+            attached = False
+            for part in self._shield_parts:
+                try:
+                    if part.vessel != vessel:
+                        continue  # largué : appartient à un autre vaisseau
+                    attached = True
+                    t = part.skin_temperature
+                    if t > 0.0:
+                        temps.append(t)
+                except Exception:
+                    continue  # pièce détruite
+            if not attached:
+                self._shield_gone = True
+                print("[KRPC] Bouclier largué → température masquée")
+                return "none", None
+            if temps:
+                return "shield", max(temps)
 
-    def _open_heat_streams(self, vessel) -> None:
-        self._close_heat_streams()
-        streams = []
-        for part in vessel.parts.all:
-            st = self.connection.add_stream(getattr, part, "skin_temperature")
-            try:
-                st.rate = 1.0
-            except Exception:
-                pass
-            streams.append(st)
-        self._heat_streams = streams
-        self._heat_built_at = time.time()
-        if len(streams) != self._heat_last_count:
-            self._heat_last_count = len(streams)
-            print(f"[KRPC] {len(streams)} streams température ouverts")
-
-    def _close_heat_streams(self) -> None:
-        for st in self._heat_streams:
-            try:
-                st.remove()
-            except Exception:
-                pass
-        self._heat_streams = []
-        self._heat_key = None
+        # Pas de bouclier sur ce vaisseau, ou pas encore mesurable (0 K).
+        ambient = flight.static_air_temperature
+        return "ambient", (ambient if ambient > 0.0 else None)
 
     def get_telemetry(self) -> Dict:
         with self._lock:
