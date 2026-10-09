@@ -34,6 +34,11 @@ STREAM_RATES_HZ: Dict[str, float] = {
 }
 
 
+# Reconstruction périodique des streams de température, par sécurité contre
+# des streams qui resteraient figés sur des pièces obsolètes.
+HEAT_REBUILD_S = 10.0
+
+
 class KRPCHandler:
     """Connexion kRPC avec reconnexion automatique et télémétrie."""
 
@@ -83,6 +88,8 @@ class KRPCHandler:
         # thread heat_poll. Reconstruits quand le vaisseau ou le stage change.
         self._heat_streams: list = []
         self._heat_key = None
+        self._heat_built_at = 0.0
+        self._heat_last_count = -1
 
         self.sas_state = False
         self.rcs_state = False
@@ -300,24 +307,42 @@ class KRPCHandler:
 
         Un stream par pièce plutôt qu'un appel RPC par pièce à chaque relevé :
         la lecture d'un stream est locale (valeur en cache), seule la
-        construction coûte des RPC. On la refait quand le stage change
-        (pièces larguées) ou que le vaisseau change.
+        construction coûte des RPC. On la refait quand le stage ou le vaisseau
+        change, quand des pièces ont disparu, quand aucune mesure n'est
+        valide (0 K) et au plus tard toutes les HEAT_REBUILD_S secondes.
         """
         with self._lock:
             vessel = self.vessel
             key = (id(self.connection), vessel, self.telemetry.get("current_stage"))
         try:
-            if key != self._heat_key or not self._heat_streams:
+            if (key != self._heat_key or not self._heat_streams
+                    or time.time() - self._heat_built_at > HEAT_REBUILD_S):
                 self._open_heat_streams(vessel)
                 self._heat_key = key
-            temp = max(st() for st in self._heat_streams)
         except Exception as e:
-            # Pièce détruite, scène changée… : on reconstruira au prochain relevé.
-            print(f"[KRPC] Température indisponible ({type(e).__name__}: {e}) → rebuild")
+            print(f"[KRPC] Streams température impossibles ({type(e).__name__}: {e})")
             self._close_heat_streams()
             return None
-        # 0 K = pièce pas encore initialisée par KSP (chargement de scène).
-        return temp if temp > 0.0 else None
+
+        # Lecture pièce par pièce : une pièce détruite (largage, crash) ne doit
+        # pas invalider les autres. On l'écarte et on reconstruit au prochain relevé.
+        temps = []
+        lost = False
+        for st in self._heat_streams:
+            try:
+                temps.append(st())
+            except Exception:
+                lost = True
+        if lost:
+            self._heat_key = None
+
+        temp = max(temps, default=0.0)
+        if temp <= 0.0:
+            # 0 K = mesure pas encore valide (vaisseau détruit, pièces pas
+            # initialisées…) : on retente avec des streams neufs.
+            self._heat_key = None
+            return None
+        return temp
 
     def _open_heat_streams(self, vessel) -> None:
         self._close_heat_streams()
@@ -330,7 +355,10 @@ class KRPCHandler:
                 pass
             streams.append(st)
         self._heat_streams = streams
-        print(f"[KRPC] {len(streams)} streams température ouverts")
+        self._heat_built_at = time.time()
+        if len(streams) != self._heat_last_count:
+            self._heat_last_count = len(streams)
+            print(f"[KRPC] {len(streams)} streams température ouverts")
 
     def _close_heat_streams(self) -> None:
         for st in self._heat_streams:
