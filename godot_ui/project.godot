@@ -20,6 +20,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="Telemetry for Capule V3 on Godot"
 run/main_scene="uid://drr5rd3uvc6jr"
+run/max_fps=30
 config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.039215688, 0.05882353, 0.10980392, 1)
 boot_splash/stretch_mode=5
@@ -47,4 +48,5 @@ theme/custom_font="uid://1y7irbroxvxj"
 
 [rendering]
 
-renderer/rendering_method="mobile"
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

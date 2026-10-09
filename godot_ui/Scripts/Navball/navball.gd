@@ -15,19 +15,33 @@ const ROLL_SIGN := 1.0     # mettre -1.0 si le roulis kRPC est inversé par rapp
 
 ## Désactivé par défaut : les flèches pilotent déjà le menu de la capsule.
 @export var keyboard_fallback := false
+## Lissage entre deux échantillons de télémétrie (20 Hz) : plus grand = plus
+## réactif, plus petit = plus doux. 0 = pas de lissage.
+@export var smoothing := 15.0
 
 var heading := 0.0   # 0..360, 0 = Nord, sens horaire vu de dessus
 var pitch := 0.0     # -90..90, positif = nez vers le haut
 var roll := 0.0      # -180..180, positif = aile droite vers le bas
 var has_attitude := false
 
+# Le rendu 3D de la boule ne se fait que quand son orientation change
+# (UPDATE_ONCE) : une navball immobile ne coûte rien au GPU.
+var _current := Quaternion.IDENTITY
+var _dirty := true
+
 @onready var ball: MeshInstance3D = $BallView/SubViewport/Ball
+@onready var viewport: SubViewport = $BallView/SubViewport
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_dirty = true
 
 
 func _process(delta: float) -> void:
 	if keyboard_fallback and not has_attitude:
 		_process_keyboard(delta)
-	_update_ball()
+	_update_ball(delta)
 
 
 func set_attitude(h: float, p: float, r: float) -> void:
@@ -59,7 +73,7 @@ func _process_keyboard(delta: float) -> void:
 	roll = wrapf(roll, -180.0, 180.0)
 
 
-func _update_ball() -> void:
+func _update_ball(delta: float) -> void:
 	# Orientation du vaisseau dans le repère monde (Nord = -Z, Est = +X, Haut = +Y).
 	# Ordre : cap, puis tangage, puis roulis (axes locaux).
 	var ship := Basis(Vector3.UP, -deg_to_rad(heading)) \
@@ -70,4 +84,25 @@ func _update_ball() -> void:
 	# vue de l'extérieur avec la texture dans le bon sens. On applique donc la
 	# rotation inverse du vaisseau, conjuguée par ce miroir.
 	var mirror := Basis.from_scale(Vector3(1, 1, -1))
-	ball.basis = mirror * ship.inverse() * mirror
+	var target := (mirror * ship.inverse() * mirror).get_rotation_quaternion()
+
+	if smoothing > 0.0:
+		var next := _current.slerp(target, 1.0 - exp(-smoothing * delta))
+		# Écart résiduel négligeable : on se cale sur la cible pour arrêter de rendre.
+		if next.angle_to(target) < 0.0005:
+			next = target
+		_set_orientation(next)
+	else:
+		_set_orientation(target)
+
+	if _dirty:
+		_dirty = false
+		viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+
+
+func _set_orientation(q: Quaternion) -> void:
+	if q.is_equal_approx(_current):
+		return
+	_current = q
+	ball.quaternion = q
+	_dirty = true
