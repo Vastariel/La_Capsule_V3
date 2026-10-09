@@ -60,6 +60,7 @@ class KRPCHandler:
         self.vessel = None
         self.control = None
         self.flight = None
+        self.flight_surface = None
         self.orbit = None
         self.camera = None
         self.space_center = None
@@ -122,6 +123,9 @@ class KRPCHandler:
         self.vessel = self.space_center.active_vessel
         self.control = self.vessel.control
         self.flight = self.vessel.flight(self.vessel.orbit.body.reference_frame)
+        # Flight séparé sur le référentiel de surface : c'est le seul qui donne
+        # le pitch/heading/roll tels qu'affichés sur la navball (90° = vertical).
+        self.flight_surface = self.vessel.flight(self.vessel.surface_reference_frame)
         self.orbit = self.vessel.orbit
         self.camera = self.space_center.camera
         self._vessel_id = id(self.vessel)
@@ -141,9 +145,9 @@ class KRPCHandler:
                 "speed": c.add_stream(getattr, self.flight, "speed"),
                 "vertical_speed": c.add_stream(getattr, self.flight, "vertical_speed"),
                 "g_force": c.add_stream(getattr, self.flight, "g_force"),
-                "pitch": c.add_stream(getattr, self.flight, "pitch"),
-                "heading": c.add_stream(getattr, self.flight, "heading"),
-                "roll": c.add_stream(getattr, self.flight, "roll"),
+                "pitch": c.add_stream(getattr, self.flight_surface, "pitch"),
+                "heading": c.add_stream(getattr, self.flight_surface, "heading"),
+                "roll": c.add_stream(getattr, self.flight_surface, "roll"),
                 "apoapsis": c.add_stream(getattr, self.orbit, "apoapsis_altitude"),
                 "periapsis": c.add_stream(getattr, self.orbit, "periapsis_altitude"),
                 "time_to_apoapsis": c.add_stream(getattr, self.orbit, "time_to_apoapsis"),
@@ -230,6 +234,7 @@ class KRPCHandler:
                 return
             streams = self._streams
             flight, orbit, control = self.flight, self.orbit, self.control
+            flight_surface = self.flight_surface
 
         # Lectures réseau sans lock : get_telemetry() reste libre pendant ce temps.
         try:
@@ -254,9 +259,9 @@ class KRPCHandler:
                 new_vals["speed"]             = flight.speed
                 new_vals["vertical_speed"]    = flight.vertical_speed
                 new_vals["g_force"]           = flight.g_force
-                new_vals["pitch"]             = flight.pitch
-                new_vals["heading"]           = flight.heading
-                new_vals["roll"]              = flight.roll
+                new_vals["pitch"]             = flight_surface.pitch
+                new_vals["heading"]           = flight_surface.heading
+                new_vals["roll"]              = flight_surface.roll
                 new_vals["apoapsis"]          = orbit.apoapsis_altitude
                 new_vals["periapsis"]         = orbit.periapsis_altitude
                 new_vals["time_to_apoapsis"]  = orbit.time_to_apoapsis
