@@ -20,7 +20,10 @@ class TestConfiguration(unittest.TestCase):
 
     def test_krpc(self):
         k = self.cfg["krpc"]
-        self.assertIsInstance(k["host"], str)
+        hosts = k.get("hosts") or [k["host"]]
+        self.assertTrue(hosts)
+        for h in hosts:
+            self.assertIsInstance(h, str)
         self.assertEqual(k["rpc_port"], 50008)
         self.assertEqual(k["stream_port"], 50001)
 

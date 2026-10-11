@@ -65,7 +65,8 @@ n'est pas prêt dans les 5 s, une fenêtre de saisie d'IP apparaît
 
 Un seul fichier : `config.json` à la racine. Sections :
 
-- `krpc` — IP/ports du PC KSP, délai de reconnexion.
+- `krpc` — IP(s)/ports du PC KSP, délai de reconnexion. `hosts` est une
+  liste : le bridge se connecte au premier PC où kRPC répond.
 - `websocket` — host/port du serveur de télémétrie, cadence `update_hz`.
 - `hardware.pico` — port série + canal ADC du throttle.
 - `hardware.gpio` — IP de la Raspi pour pigpio, LEDs, leviers, boutons.

@@ -86,7 +86,7 @@ def main() -> None:
     # ---- KRPC -------------------------------------------------------
     kcfg = config.get("krpc", {})
     krpc = KRPCHandler(
-        host=kcfg.get("host", "127.0.0.1"),
+        host=kcfg.get("hosts") or kcfg.get("host", "127.0.0.1"),
         rpc_port=kcfg.get("rpc_port", 50008),
         stream_port=kcfg.get("stream_port", 50001),
         reconnect_timeout_s=kcfg.get("reconnect_timeout_s", 5),

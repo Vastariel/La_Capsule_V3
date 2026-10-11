@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-KSP Control - Connexion kRPC propre au serveur admin (sur le PC de KSP).
+KSP Control - Connexion kRPC propre au serveur admin.
 
 Toutes les méthodes sont synchrones et protégées par un verrou : le serveur
 les appelle via asyncio.to_thread(). Une méthode lève KSPError avec un
 message lisible par l'animateur en cas d'échec.
 """
 
+import socket
 import threading
 import time
 from pathlib import Path
@@ -21,7 +22,11 @@ class KSPError(Exception):
 
 class KSPControl:
     def __init__(self, cfg: dict, ksp_cfg: dict, camera_cfg: dict):
-        self.host = cfg.get("host", "127.0.0.1")
+        # Plusieurs PC KSP possibles (ce PC, celui de la capsule...) : essayés
+        # dans l'ordre, le dernier qui a répondu en premier.
+        hosts = cfg.get("hosts") or cfg.get("host", "127.0.0.1")
+        self.hosts = [hosts] if isinstance(hosts, str) else list(hosts)
+        self.host = self.hosts[0]
         self.rpc_port = cfg.get("rpc_port", 50008)
         self.stream_port = cfg.get("stream_port", 50001)
         self.ksp_dir = Path(ksp_cfg.get("dir", ""))
@@ -35,6 +40,16 @@ class KSPControl:
 
     # ---- Connexion ---------------------------------------------------
 
+    def _find_host(self) -> Optional[str]:
+        """Premier hôte dont le port RPC répond (test TCP court)."""
+        for host in [self.host] + [h for h in self.hosts if h != self.host]:
+            try:
+                with socket.create_connection((host, self.rpc_port), timeout=1.0):
+                    return host
+            except OSError:
+                continue
+        return None
+
     def _sc(self):
         """SpaceCenter connecté, avec reconnexion (au plus toutes les 3 s)."""
         if self._conn is not None:
@@ -46,6 +61,12 @@ class KSPControl:
         if time.time() - self._last_attempt < 3.0:
             raise KSPError("KSP injoignable (kRPC)")
         self._last_attempt = time.time()
+        if len(self.hosts) > 1:
+            host = self._find_host()
+            if host is None:
+                print(f"[KRPC] Aucun KSP joignable ({', '.join(self.hosts)})")
+                raise KSPError("KSP injoignable (kRPC)")
+            self.host = host
         try:
             self._conn = krpc.connect(
                 name="La Capsule - admin",

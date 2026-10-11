@@ -46,7 +46,8 @@ def print_config_summary() -> None:
     print("=" * 60)
     print("CONFIGURATION")
     print("=" * 60)
-    print(f"KSP:       {k.get('host')}:{k.get('rpc_port')} (stream {k.get('stream_port')})")
+    hosts = k.get("hosts") or [k.get("host")]
+    print(f"KSP:       {', '.join(map(str, hosts))} :{k.get('rpc_port')} (stream {k.get('stream_port')})")
     print(f"Raspi:     {g.get('raspi_ip')} (remote={g.get('use_remote')})")
     print(f"WebSocket: ws://{w.get('host')}:{w.get('port')}  {w.get('update_hz')} Hz")
     print(f"Pico:      {p.get('port')} ch={p.get('adc_channel_throttle')}")

@@ -9,9 +9,10 @@ les commandes (SAS, RCS, throttle, action groups, caméra).
 
 import concurrent.futures
 import math
+import socket
 import threading
 import time
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 import krpc
 
@@ -55,13 +56,16 @@ class KRPCHandler:
     def __init__(
         self,
         name: str = "La_Capsule",
-        host: str = "192.168.1.31",
+        host: Union[str, List[str]] = "192.168.1.31",
         rpc_port: int = 50008,
         stream_port: int = 50001,
         reconnect_timeout_s: int = 5,
     ):
         self.name = name
-        self.host = host
+        # Plusieurs PC KSP possibles : essayés dans l'ordre, le dernier qui a
+        # répondu en premier.
+        self.hosts = [host] if isinstance(host, str) else list(host)
+        self.host = self.hosts[0]
         self.rpc_port = rpc_port
         self.stream_port = stream_port
         self.reconnect_timeout_s = reconnect_timeout_s
@@ -127,9 +131,26 @@ class KRPCHandler:
 
     # ---- Connexion ---------------------------------------------------
 
+    def _find_host(self) -> Optional[str]:
+        """Premier hôte dont le port RPC répond (test TCP court)."""
+        for host in [self.host] + [h for h in self.hosts if h != self.host]:
+            try:
+                with socket.create_connection((host, self.rpc_port), timeout=1.0):
+                    return host
+            except OSError:
+                continue
+        return None
+
     def connect(self) -> bool:
         with self._lock:
             self.last_connection_attempt = time.time()
+            if len(self.hosts) > 1:
+                host = self._find_host()
+                if host is None:
+                    print(f"[KRPC] Aucun KSP joignable ({', '.join(self.hosts)})")
+                    self.connected = False
+                    return False
+                self.host = host
             try:
                 print(f"[KRPC] Connexion à {self.host}:{self.rpc_port}...", end=" ", flush=True)
                 self.connection = krpc.connect(
