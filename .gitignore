@@ -61,3 +61,6 @@ Thumbs.db
 node_modules/
 package-lock.json
 yarn.lock
+
+# Interface animateur : réglages propres à chaque machine
+admin_server/config.local.json

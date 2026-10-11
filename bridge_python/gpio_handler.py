@@ -281,6 +281,9 @@ class GPIOHandler:
             if self._throttle_lever_prev is not False:
                 self.pico.reset_emit()
                 self._throttle_lever_prev = False
+            # Lecture sans effet sur KSP : alimente l'historique brut utilisé
+            # par la calibration à distance (faite levier OFF).
+            self.pico.read_throttle_raw()
             return
 
         # Transition OFF→ON (ou premier tick avec levier ON) : on pousse

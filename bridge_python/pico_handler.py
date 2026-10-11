@@ -7,6 +7,7 @@ deadband de sortie pour éviter de spammer kRPC avec du bruit.
 """
 
 import time
+from collections import deque
 from typing import Optional
 
 try:
@@ -43,6 +44,11 @@ class PicoHandler:
         self.connected = False
         self.last_error: Optional[str] = None
 
+        # Dernières valeurs brutes du canal throttle (≈1,5 s à 20 Hz), pour la
+        # calibration à distance : la lecture ADC reste faite par le thread GPIO
+        # (picod est lié à son thread), l'interface admin lit cet historique.
+        self._raw_history: deque = deque(maxlen=30)
+
         # État EMA : None tant qu'aucune valeur n'a été lue
         self._ema: Optional[float] = None
         self._last_emitted: float = 0.0
@@ -76,6 +82,22 @@ class PicoHandler:
             if not dedup or raw > dedup[-1][0]:
                 dedup.append((raw, frac))
         return dedup if len(dedup) >= 2 else []
+
+    def set_calibration(self, calibration: Optional[list]) -> bool:
+        """Remplace la table d'étalonnage à chaud. False si elle est invalide."""
+        pts = self._build_calibration(calibration)
+        if not pts:
+            return False
+        self._calib = pts
+        self._ema = None
+        return True
+
+    def recent_raw(self) -> Optional[dict]:
+        """Valeur brute courante et moyenne des dernières lectures, ou None."""
+        samples = list(self._raw_history)
+        if not samples:
+            return None
+        return {"live": samples[-1], "average": round(sum(samples) / len(samples))}
 
     def _apply_calibration(self, raw: float) -> float:
         """Convertit une valeur brute ADC en fraction 0..1 corrigée via
@@ -144,6 +166,7 @@ class PicoHandler:
         raw = self.read_raw(self.adc_channel)
         if raw is None:
             return None
+        self._raw_history.append(raw)
 
         norm = self._apply_calibration(raw)
         if self._ema is None:

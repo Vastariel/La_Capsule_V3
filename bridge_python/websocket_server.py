@@ -5,6 +5,10 @@ WebSocket Server - Diffuse la télémétrie kRPC aux clients Godot.
 Architecture : une seule tâche broadcast lit la télémétrie à la cadence
 configurée et l'envoie à tous les clients simultanément (au lieu d'une
 boucle par client).
+
+Messages entrants : seules les commandes de l'interface animateur sont
+traitées ({"id", "cmd", "token", ...} → réponse {"reply_to": id, ...} au seul
+émetteur, voir admin_commands.py). Le reste est ignoré.
 """
 
 import asyncio
@@ -22,8 +26,10 @@ except ImportError:
 class WebSocketServer:
     """Serveur WebSocket broadcast-only pour la télémétrie."""
 
-    def __init__(self, krpc=None, host: str = "0.0.0.0", port: int = 8080, update_hz: int = 10):
+    def __init__(self, krpc=None, host: str = "0.0.0.0", port: int = 8080, update_hz: int = 10,
+                 admin=None):
         self.krpc = krpc
+        self.admin = admin
         self.host = host
         self.port = port
         self.interval = 1.0 / max(1, update_hz)
@@ -38,22 +44,44 @@ class WebSocketServer:
         addr = getattr(websocket, "remote_address", "?")
         print(f"[WS] Client connecté: {addr}")
         try:
-            async for _ in websocket:  # on ignore les messages entrants
-                pass
+            async for raw in websocket:
+                await self._on_message(websocket, raw)
         except websockets.ConnectionClosed:
             pass
         finally:
             self.clients.discard(websocket)
             print(f"[WS] Client déconnecté: {addr}")
 
+    async def _on_message(self, websocket, raw) -> None:
+        if self.admin is None:
+            return
+        try:
+            msg = json.loads(raw)
+        except (TypeError, ValueError):
+            return
+        if not isinstance(msg, dict) or "cmd" not in msg:
+            return
+        reply = self.admin.handle(msg)
+        reply["reply_to"] = msg.get("id")
+        try:
+            await websocket.send(json.dumps(reply))
+        except Exception:
+            pass
+        # Une panne change l'écran Godot : on rediffuse sans attendre la télémétrie.
+        if msg.get("cmd") == "failure_set" and self._new_data_event:
+            self._new_data_event.set()
+
     # ---- Broadcast ---------------------------------------------------
 
     def _build_payload(self) -> dict:
         if not self.krpc or not self.krpc.connected:
-            return {"connected": False}
-        data = self.krpc.get_telemetry()
-        data["connected"] = True
-        data["ascending"] = data.get("vertical_speed", 0) > 0
+            data = {"connected": False}
+        else:
+            data = self.krpc.get_telemetry()
+            data["connected"] = True
+            data["ascending"] = data.get("vertical_speed", 0) > 0
+        if self.admin is not None:
+            data["failures"] = self.admin.get_failures()
         return data
 
     def notify_new_data(self) -> None:

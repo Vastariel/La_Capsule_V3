@@ -25,6 +25,8 @@ var roll := 0.0      # -180..180, positif = aile droite vers le bas
 var has_attitude := false
 # Direction prograde (repère monde : Nord = -Z, Est = +X, Haut = +Y), ou null.
 var _prograde_dir: Variant = null
+# Panne d'instrument déclenchée par l'animateur : boule masquée.
+var failed := false
 
 # Le rendu 3D de la boule ne se fait que quand son orientation change
 # (UPDATE_ONCE) : une navball immobile ne coûte rien au GPU.
@@ -53,6 +55,16 @@ func set_attitude(h: float, p: float, r: float) -> void:
 	heading = fposmod(h, 360.0)
 	pitch = clampf(p, -90.0, 90.0)
 	roll = wrapf(r * ROLL_SIGN, -180.0, 180.0)
+
+
+## Panne d'instrument (interface animateur) : masque la boule et les marqueurs.
+func set_failed(value: bool) -> void:
+	if value == failed:
+		return
+	failed = value
+	$BallView.visible = not value
+	overlay.set_failed(value)
+	_dirty = true
 
 
 ## Direction du vecteur vitesse (cap / tangage en degrés). null = masquer.
@@ -132,7 +144,7 @@ func _project(dir: Vector3) -> Vector3:
 
 
 func _update_markers() -> void:
-	if _prograde_dir == null:
+	if _prograde_dir == null or failed:
 		overlay.set_markers(null, null)
 	else:
 		overlay.set_markers(_project(_prograde_dir), _project(-_prograde_dir))

@@ -21,6 +21,7 @@ from krpc_handler import KRPCHandler
 from pico_handler import PicoHandler
 from gpio_handler import GPIOHandler
 from websocket_server import WebSocketServer
+from admin_commands import AdminCommands
 
 
 CONFIG_SEARCH_PATHS = [
@@ -29,13 +30,14 @@ CONFIG_SEARCH_PATHS = [
 ]
 
 
-def load_config() -> dict:
+def load_config():
+    """Renvoie (config, chemin du fichier)."""
     for path in CONFIG_SEARCH_PATHS:
         if path.exists():
             with open(path, "r", encoding="utf-8") as f:
                 cfg = json.load(f)
             print(f"[CONFIG] Chargé: {path}")
-            return cfg
+            return cfg, path
     print("✗ config.json introuvable. Chemins testés:")
     for p in CONFIG_SEARCH_PATHS:
         print(f"  - {p}")
@@ -79,7 +81,7 @@ def main() -> None:
     print("La Capsule V3 - KSP Hardware Control")
     print("=" * 60)
 
-    config = load_config()
+    config, config_path = load_config()
 
     # ---- KRPC -------------------------------------------------------
     kcfg = config.get("krpc", {})
@@ -112,6 +114,11 @@ def main() -> None:
     if krpc.connected:
         gpio.resync_vessel_state()
 
+    # ---- Interface animateur (calibration, pannes d'instruments) -----
+    admin = AdminCommands(pico, config_path, config.get("admin", {}).get("token"))
+    if admin.token is None:
+        print("[ADMIN] admin.token absent de config.json : commandes animateur refusées")
+
     # ---- WebSocket --------------------------------------------------
     wcfg = config.get("websocket", {})
     ws_hz = int(wcfg.get("update_hz", 20))
@@ -120,6 +127,7 @@ def main() -> None:
         host=wcfg.get("host", "0.0.0.0"),
         port=wcfg.get("port", 8080),
         update_hz=ws_hz,
+        admin=admin,
     )
     threading.Thread(target=ws.start, daemon=True).start()
 

@@ -1,0 +1,24 @@
+{
+  "http": {
+    "host": "0.0.0.0",
+    "port": 8090
+  },
+  "pin": "1234",
+  "krpc": {
+    "host": "127.0.0.1",
+    "rpc_port": 50008,
+    "stream_port": 50001
+  },
+  "bridge": {
+    "url": "ws://192.168.1.56:8080",
+    "token": "WqDPkoFqg-IC-akvDGjMDRsG"
+  },
+  "ksp": {
+    "dir": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Kerbal Space Program",
+    "save_game": "default"
+  },
+  "camera": {
+    "rotate_step_deg": 4.0,
+    "zoom_factor": 1.25
+  }
+}

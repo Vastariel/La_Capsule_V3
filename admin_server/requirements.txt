@@ -1,0 +1,3 @@
+# Serveur de l interface animateur (PC de KSP)
+krpc==0.5.2
+aiohttp>=3.9

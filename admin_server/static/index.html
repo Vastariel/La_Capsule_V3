@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F1C">
+<title>La Capsule · Animation</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">LA CAPSULE · ANIMATION</div>
+  <div class="status">
+    <span class="dot" id="dot-ksp"></span><span>KSP</span>
+    <span class="dot" id="dot-bridge"></span><span>CAPSULE</span>
+  </div>
+</header>
+<div class="vessel" id="vessel">—</div>
+
+<main>
+  <!-- Caméra -->
+  <section class="panel">
+    <h2>CAMÉRA</h2>
+    <div class="row">
+      <button class="btn" id="btn-map">VUE CARTE</button>
+      <button class="btn ghost" id="btn-cam-reset">RECENTRER</button>
+    </div>
+    <div class="camera">
+      <div class="joystick" id="joystick" aria-label="Orienter la caméra">
+        <span class="arrow up">▲</span><span class="arrow down">▼</span>
+        <span class="arrow left">◀</span><span class="arrow right">▶</span>
+        <div class="knob" id="knob"></div>
+      </div>
+      <div class="zoom">
+        <button class="btn round" data-zoom="1" aria-label="Rapprocher">+</button>
+        <span class="label">ZOOM</span>
+        <button class="btn round" data-zoom="-1" aria-label="Éloigner">−</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Science -->
+  <section class="panel">
+    <h2>SCIENCE</h2>
+    <button class="btn wide" id="btn-science">LANCER TOUTES LES EXPÉRIENCES</button>
+    <p class="result" id="science-result"></p>
+  </section>
+
+  <!-- Pannes -->
+  <section class="panel">
+    <h2>PANNES</h2>
+    <div class="line">
+      <div>
+        <div class="name">Navball</div>
+        <div class="sub" id="navball-state">—</div>
+      </div>
+      <button class="btn danger" id="btn-navball">DÉCLENCHER</button>
+    </div>
+    <div class="sep"></div>
+    <div class="line">
+      <div class="name">Parachutes</div>
+      <button class="btn danger ghost" id="btn-chutes-all">COUPER TOUS</button>
+    </div>
+    <ul class="list" id="chutes"><li class="sub">Aucun parachute</li></ul>
+  </section>
+
+  <!-- Calibration -->
+  <section class="panel">
+    <h2>CALIBRATION MOTEUR</h2>
+    <p class="hint">Levier <b>THROTTLE CONTROL</b> sur OFF pendant la calibration.
+      Place la manette à chaque position, puis touche CAPTURER.</p>
+    <div class="calib-live">
+      <span class="label">BRUT ADC</span>
+      <span class="digit" id="calib-raw">----</span>
+    </div>
+    <ol class="steps" id="calib-steps"></ol>
+    <div class="row">
+      <button class="btn ghost" id="btn-calib-reset">RECOMMENCER</button>
+      <button class="btn" id="btn-calib-save" disabled>ENREGISTRER</button>
+    </div>
+  </section>
+
+  <!-- Mission -->
+  <section class="panel">
+    <h2>MISSION</h2>
+    <button class="btn wide danger" id="btn-revert">REVENIR AU LANCEMENT</button>
+    <div class="line">
+      <div class="name">Sauvegardes</div>
+      <button class="btn ghost" id="btn-saves">ACTUALISER</button>
+    </div>
+    <ul class="list" id="saves"><li class="sub">—</li></ul>
+  </section>
+</main>
+
+<!-- Code PIN -->
+<div class="overlay" id="pin-screen" hidden>
+  <form class="sheet" id="pin-form">
+    <h2>CODE ANIMATEUR</h2>
+    <input id="pin-input" class="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••">
+    <p class="error" id="pin-error"></p>
+    <button class="btn wide" type="submit">VALIDER</button>
+  </form>
+</div>
+
+<!-- Confirmation -->
+<div class="overlay" id="confirm" hidden>
+  <div class="sheet">
+    <h2 id="confirm-title">CONFIRMER</h2>
+    <p id="confirm-text"></p>
+    <div class="row">
+      <button class="btn ghost" id="confirm-no">ANNULER</button>
+      <button class="btn danger" id="confirm-yes">CONFIRMER</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

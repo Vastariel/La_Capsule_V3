@@ -10,6 +10,12 @@ extends Control
 # Positions projetées (x, y en rayons de boule, z = profondeur) ou null.
 var _prograde: Variant = null
 var _retrograde: Variant = null
+var _failed := false
+
+
+func set_failed(value: bool) -> void:
+	_failed = value
+	queue_redraw()
 
 
 func set_markers(prograde: Variant, retrograde: Variant) -> void:
@@ -33,6 +39,10 @@ func _draw() -> void:
 	# Anneau extérieur
 	draw_arc(c, ring_r + 3.0 * k, 0.0, TAU, 128, Color(0.75, 0.75, 0.78), maxf(6.0 * k, 1.5), true)
 	draw_arc(c, ring_r + 8.0 * k, 0.0, TAU, 128, Color(0.25, 0.26, 0.3), maxf(4.0 * k, 1.0), true)
+
+	if _failed:
+		_draw_failure(c, ring_r)
+		return
 
 	# Marqueurs de vitesse, sous le symbole du vaisseau
 	_draw_marker(_prograde, false, c, ring_r)
@@ -79,3 +89,16 @@ func _draw_marker(m: Variant, retro: bool, c: Vector2, ring_r: float) -> void:
 			draw_line(p + Vector2(-x, x), p + Vector2(x, -x), k, w, true)
 		else:
 			draw_circle(p, w * 0.8, k)
+
+
+# Panne : disque sombre barré, mention « PANNE » en ambre.
+func _draw_failure(c: Vector2, ring_r: float) -> void:
+	var amber := Color(1.0, 0.6, 0.1)
+	draw_circle(c, ring_r, Color(0.06, 0.07, 0.1))
+	var d := ring_r * 0.7071
+	draw_line(c + Vector2(-d, -d), c + Vector2(d, d), Color(amber, 0.35), maxf(ring_r * 0.03, 1.5), true)
+	var font := get_theme_default_font()
+	var fs := int(maxf(ring_r * 0.28, 10.0))
+	var text := "PANNE"
+	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	draw_string(font, c + Vector2(-w / 2.0, fs * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, amber)

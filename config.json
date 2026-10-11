@@ -122,5 +122,8 @@
         4095
       ]
     ]
+  },
+  "admin": {
+    "token": "WqDPkoFqg-IC-akvDGjMDRsG"
   }
 }
