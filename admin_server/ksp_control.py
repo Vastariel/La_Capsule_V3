@@ -203,7 +203,10 @@ class KSPControl:
     def list_saves(self) -> List[str]:
         folder = self.ksp_dir / "saves" / self.save_game
         if not folder.is_dir():
-            return []
+            saves_dir = self.ksp_dir / "saves"
+            games = sorted(p.name for p in saves_dir.iterdir() if p.is_dir()) if saves_dir.is_dir() else []
+            hint = f" — parties disponibles : {', '.join(games)}" if games else ""
+            raise KSPError(f"dossier introuvable : {folder}{hint}")
         files = sorted(folder.glob("*.sfs"), key=lambda p: p.stat().st_mtime, reverse=True)
         return [f.stem for f in files]
 
